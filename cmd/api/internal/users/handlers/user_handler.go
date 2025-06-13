@@ -51,6 +51,7 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 	order.UserID = userOID
+	order.WriterID = nil // Set WriterID to nil so it is omitted or null in JSON if not assigned
 	// Ensure OrderTypeID is provided and valid
 	if order.OrderTypeID.IsZero() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "OrderTypeID is required"})
