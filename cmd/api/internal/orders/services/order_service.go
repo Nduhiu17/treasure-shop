@@ -40,7 +40,6 @@ func (s *OrderService) GetAllOrders() ([]models.Order, error) {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
-	
 
 	var orders []models.Order
 	if err := cursor.All(ctx, &orders); err != nil {
@@ -85,21 +84,54 @@ func (s *OrderService) AssignOrder(orderID, writerID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Verify writer exists
-	writerExists := s.userCollection.FindOne(ctx, bson.M{"_id": writerID, "roles": "writer"})
-	if writerExists.Err() != nil {
+	// Verify writer exists (multi-role system: check user_roles for writer role)
+	writerRole := s.userCollection.Database().Collection("user_roles")
+	roleCol := s.userCollection.Database().Collection("roles")
+	var writerRoleIDs []primitive.ObjectID
+	cursor, err := writerRole.Find(ctx, bson.M{"user_id": writerID})
+	if err != nil {
+		return errors.New("failed to check writer roles")
+	}
+	defer cursor.Close(ctx)
+	for cursor.Next(ctx) {
+		var ur struct {
+			RoleID primitive.ObjectID `bson:"role_id"`
+		}
+		if err := cursor.Decode(&ur); err == nil {
+			writerRoleIDs = append(writerRoleIDs, ur.RoleID)
+		}
+	}
+	isWriter := false
+	for _, roleID := range writerRoleIDs {
+		var roleDoc struct {
+			Name string `bson:"name"`
+		}
+		if err := roleCol.FindOne(ctx, bson.M{"_id": roleID}).Decode(&roleDoc); err == nil && roleDoc.Name == "writer" {
+			isWriter = true
+			break
+		}
+	}
+	if !isWriter {
 		return errors.New("writer not found")
 	}
 
-	_, err := s.orderCollection.UpdateOne(
+	_, err = s.orderCollection.UpdateOne(
 		ctx,
-		bson.M{"_id": orderID, "status": "awaiting_assignment"},
-		bson.M{"$set": bson.M{"writer_id": writerID, "status": "assigned"}},
+		bson.M{"_id": orderID, "status": "paid"},
+		bson.M{"$set": bson.M{"writer_id": writerID, "status": "awaiting_asign_acceptance", "assignment_date": time.Now()}},
 	)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return errors.New("order already assigned to a writer")
+		}
+		if err == mongo.ErrNoDocuments {
+			return errors.New("order not found or not awaiting assignment")
+		}
+	}
 	return err
 }
 
-func (s *OrderService) SubmitOrder(orderID, writerID primitive.ObjectID, content string) error {
+func (s *OrderService) SubmitOrder(orderID primitive.ObjectID, writerID primitive.ObjectID, content string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
