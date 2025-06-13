@@ -144,13 +144,18 @@ func (s *OrderService) SubmitOrder(orderID primitive.ObjectID, writerID primitiv
 	_, err := s.orderCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": orderID},
-		bson.M{"$set": bson.M{"status": "submitted_for_review", "submission_date": time.Now()}},
+		bson.M{"$set": bson.M{"status": "submitted_for_review","content":content,"submission_date": time.Now()}},
 	)
 	if err != nil {
 		return err
 	}
 
 	// In a real application, you would likely create a 'Review' record here as well.
+	// This could include the content submitted by the writer, the order ID, and any other relevant details.
+	
+
+
+
 	// For this basic example, we'll just update the order status.
 
 	return nil
