@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
@@ -26,6 +27,7 @@ func NewOrderService(db *mongo.Database) *OrderService {
 func (s *OrderService) CreateOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	fmt.Println("Creating order:", order)
 	_, err := s.orderCollection.InsertOne(ctx, order)
 	return err
 }

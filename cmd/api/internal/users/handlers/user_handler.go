@@ -31,10 +31,14 @@ func NewUserHandler(client *mongo.Client, dbName string) *UserHandler {
 func (h *UserHandler) CreateOrder(c *gin.Context) {
 	userIDInterface, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID not found"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID not found in token/context"})
 		return
 	}
-	userID := userIDInterface.(string)
+	userID, ok := userIDInterface.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID in context is not a string"})
+		return
+	}
 	userOID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
@@ -55,7 +59,7 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 	order.Status = "pending_payment" // Initial status
 
 	if err := h.orderService.CreateOrder(&order); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order", "details": err.Error()})
 		return
 	}
 

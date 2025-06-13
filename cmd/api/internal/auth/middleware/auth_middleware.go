@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -42,7 +43,13 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			userID := claims["sub"].(string)
+			userID, ok := claims["sub"].(string)
+			if !ok {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token claims"})
+				return
+			}
+			fmt.Println("User ID from token:", userID)
+			c.Set("userID", userID)
 
 			rolesRaw := claims["roles"]
 			var roles []interface{}
