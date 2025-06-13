@@ -11,12 +11,15 @@ import (
 )
 
 type WriterHandler struct {
-	service *services.UserService // Assuming UserService handles writer creation as well
+	service *services.UserService
+	db      *mongo.Database
 }
 
 func NewWriterHandler(client *mongo.Client, dbName string) *WriterHandler {
+	db := client.Database(dbName)
 	return &WriterHandler{
-		service: services.NewUserService(client.Database(dbName)),
+		service: services.NewUserService(db),
+		db:      db,
 	}
 }
 
@@ -26,13 +29,17 @@ func (h *WriterHandler) CreateWriter(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user.Roles = []string{"writer"} // Assign writer role
-
-	if err := h.service.CreateUser(&user); err != nil {
+	roleService := services.NewRoleService(h.db)
+	userRoleService := services.NewUserRoleService(h.db)
+	writerRole, err := roleService.GetByName("writer")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Writer role not found. Please create it first."})
+		return
+	}
+	if err := h.service.CreateUser(&user, userRoleService, roleService, writerRole.ID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create writer account"})
 		return
 	}
-
 	c.JSON(http.StatusCreated, gin.H{"message": "Writer account created successfully"})
 }
 

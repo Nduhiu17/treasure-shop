@@ -8,8 +8,23 @@ type User struct {
 	Username  string             `bson:"username" json:"username" binding:"required"`
 	FirstName string             `bson:"first_name" json:"first_name" binding:"required"`
 	LastName  string             `bson:"last_name" json:"last_name" binding:"required"`
-	Password  string             `bson:"password" json:"password"`
-	Roles     []string           `bson:"roles" json:"roles"`                   // e.g., ["user", "writer", "admin", "super_admin"]
-	Tier      string             `bson:"tier,omitempty" json:"tier,omitempty"` // For writers: basic, top, premium
-	// Add other user-related fields
+	Password  string             `bson:"password" json:"password" binding:"required"`
+	Tier      string             `bson:"tier,omitempty" json:"tier,omitempty"`
+}
+
+// Role struct for roles collection
+// Each role has an ID and a role name
+// e.g., {"_id": ObjectId, "name": "admin"}
+type Role struct {
+	ID   primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Name string             `bson:"name" json:"name" binding:"required"`
+}
+
+// UserRole struct for user_roles collection
+// Each user_role links a user to a role
+// e.g., {"_id": ObjectId, "user_id": ObjectId, "role_id": ObjectId}
+type UserRole struct {
+	ID     primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	UserID primitive.ObjectID `bson:"user_id" json:"user_id" binding:"required"`
+	RoleID primitive.ObjectID `bson:"role_id" json:"role_id" binding:"required"`
 }

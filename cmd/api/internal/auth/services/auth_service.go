@@ -8,7 +8,9 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/users/models"
+	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,7 +25,7 @@ func NewAuthService(db *mongo.Database) *AuthService {
 	}
 }
 
-func (s *AuthService) Register(user *models.User) error {
+func (s *AuthService) Register(user *models.User, userRoleService *userservices.UserRoleService, roleService *userservices.RoleService) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -37,10 +39,29 @@ func (s *AuthService) Register(user *models.User) error {
 		return err
 	}
 	user.Password = string(hashedPassword)
-	user.Roles = []string{"user"} // Default role
 
-	_, err = s.userCollection.InsertOne(ctx, user)
-	return err
+	res, err := s.userCollection.InsertOne(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	// Find the 'user' role
+	userRoleObj, err := roleService.GetByName("user")
+	if err != nil {
+		return errors.New("default user role not found")
+	}
+
+	// Create user_roles document
+	userID := res.InsertedID.(primitive.ObjectID)
+	userRoleDoc := &models.UserRole{
+		UserID: userID,
+		RoleID: userRoleObj.ID,
+	}
+	if err := userRoleService.Create(userRoleDoc); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *AuthService) Login(email, password string) (string, error) {
@@ -62,7 +83,6 @@ func (s *AuthService) Login(email, password string) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["sub"] = user.ID.Hex()
 	claims["email"] = user.Email
-	claims["roles"] = user.Roles
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
 	jwtSecret := os.Getenv("JWT_SECRET")

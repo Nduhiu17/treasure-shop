@@ -6,16 +6,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/auth/services"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/users/models"
+	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type AuthHandler struct {
-	service *services.AuthService
+	service         *services.AuthService
+	userRoleService *userservices.UserRoleService
+	roleService     *userservices.RoleService
 }
 
-func NewAuthHandler(client *mongo.Client, dbName string) *AuthHandler {
+func NewAuthHandler(client *mongo.Client, dbName string, userRoleService *userservices.UserRoleService, roleService *userservices.RoleService) *AuthHandler {
 	return &AuthHandler{
-		service: services.NewAuthService(client.Database(dbName)),
+		service:         services.NewAuthService(client.Database(dbName)),
+		userRoleService: userRoleService,
+		roleService:     roleService,
 	}
 }
 
@@ -26,7 +31,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Register(&user); err != nil {
+	if err := h.service.Register(&user, h.userRoleService, h.roleService); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -35,7 +40,10 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
-	var credentials models.User
+	var credentials struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
 	if err := c.ShouldBindJSON(&credentials); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

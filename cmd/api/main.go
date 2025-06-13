@@ -12,10 +12,35 @@ import (
 	ohandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/handlers"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	uhandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/handlers"
+	userrolehandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/handlers"
+	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	whandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/writers/handlers"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.mongodb.org/mongo-driver/mongo"
 )
+
+func registerRoleRoutes(r *gin.Engine, db *mongo.Database) {
+	roleService := userservices.NewRoleService(db)
+	roleHandler := userrolehandlers.NewRoleHandler(roleService)
+	userRoleService := userservices.NewUserRoleService(db)
+	userRoleHandler := userrolehandlers.NewUserRoleHandler(userRoleService)
+
+	admin := r.Group("/api/admin")
+	admin.Use(middleware.AuthMiddleware())
+	{
+		admin.POST("/roles", roleHandler.Create)
+		admin.GET("/roles", roleHandler.List)
+		admin.GET("/roles/:id", roleHandler.GetByID)
+		admin.PUT("/roles/:id", roleHandler.Update)
+		admin.DELETE("/roles/:id", roleHandler.Delete)
+
+		admin.POST("/user-roles", userRoleHandler.Create)
+		admin.GET("/user-roles", userRoleHandler.List)
+		admin.GET("/user-roles/user/:user_id", userRoleHandler.GetByUserID)
+		admin.DELETE("/user-roles/:id", userRoleHandler.Delete)
+	}
+}
 
 func main() {
 	err := godotenv.Load()
@@ -37,10 +62,14 @@ func main() {
 	}
 	defer database.DisconnectMongoDB(client)
 
+	db := client.Database(dbName)
+	roleService := userservices.NewRoleService(db)
+	userRoleService := userservices.NewUserRoleService(db)
+
 	r := gin.Default()
 
 	// Initialize Handlers (you'll need to pass in services and database client)
-	authHandler := ahandlers.NewAuthHandler(client, dbName)
+	authHandler := ahandlers.NewAuthHandler(client, dbName, userRoleService, roleService)
 	userHandler := uhandlers.NewUserHandler(client, dbName)
 	writerHandler := whandlers.NewWriterHandler(client, dbName)
 	orderHandler := ohandlers.NewOrderHandler(client, dbName)
@@ -114,6 +143,9 @@ func main() {
 			orderReview.PUT("/feedback", orderHandler.ProvideFeedback)
 		}
 	}
+
+	// Register role and user_role admin routes
+	registerRoleRoutes(r, client.Database(dbName))
 
 	port := os.Getenv("PORT")
 	if port == "" {

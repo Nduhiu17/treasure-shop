@@ -43,11 +43,20 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			userID := claims["sub"].(string)
-			email := claims["email"].(string)
-			roles := claims["roles"].([]interface{}) // Assert to []interface{} first
 
-			c.Set("userID", userID)
-			c.Set("email", email)
+			rolesRaw := claims["roles"]
+			var roles []interface{}
+			switch v := rolesRaw.(type) {
+			case []interface{}:
+				roles = v
+			case nil:
+				roles = []interface{}{}
+			case string:
+				roles = []interface{}{v}
+			default:
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid roles in token claims"})
+				return
+			}
 			c.Set("roles", roles)
 
 			// Optionally fetch user details from the database here if needed for every request

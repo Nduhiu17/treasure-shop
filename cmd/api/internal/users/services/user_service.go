@@ -22,7 +22,7 @@ func NewUserService(db *mongo.Database) *UserService {
 	}
 }
 
-func (s *UserService) CreateUser(user *models.User) error {
+func (s *UserService) CreateUser(user *models.User, userRoleService *UserRoleService, roleService *RoleService, roleID ...primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -37,8 +37,34 @@ func (s *UserService) CreateUser(user *models.User) error {
 	}
 	user.Password = string(hashedPassword)
 
-	_, err = s.userCollection.InsertOne(ctx, user)
-	return err
+	res, err := s.userCollection.InsertOne(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	var assignedRole *models.Role
+	if len(roleID) > 0 {
+		// Use provided roleID
+		assignedRole = &models.Role{ID: roleID[0]}
+	} else {
+		// Find the 'user' role
+		assignedRole, err = roleService.GetByName("user")
+		if err != nil {
+			return errors.New("default user role not found")
+		}
+	}
+
+	// Create user_roles document
+	userID := res.InsertedID.(primitive.ObjectID)
+	userRoleDoc := &models.UserRole{
+		UserID: userID,
+		RoleID: assignedRole.ID,
+	}
+	if err := userRoleService.Create(userRoleDoc); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserService) GetUserByID(id primitive.ObjectID) (*models.User, error) {
@@ -82,10 +108,7 @@ func (s *UserService) UpdateUser(user *models.User) error {
 		}
 		update["password"] = string(hashedPassword)
 	}
-	if len(user.Roles) > 0 {
-		update["roles"] = user.Roles
-	}
-	// Add other fields you want to update
+	// Remove roles update logic since roles are now managed via user_roles
 
 	_, err := s.userCollection.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": update})
 	return err
