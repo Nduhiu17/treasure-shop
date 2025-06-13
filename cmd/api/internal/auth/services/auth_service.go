@@ -84,6 +84,22 @@ func (s *AuthService) Login(email, password string) (string, error) {
 	claims["sub"] = user.ID.Hex()
 	claims["email"] = user.Email
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+	claims["iat"] = time.Now().Unix()
+	claims["roles"] = []string{} // Initialize roles slice
+	// Fetch user roles
+	userRoleService := userservices.NewUserRoleService(s.userCollection.Database())
+	roles, err := userRoleService.GetByUserID(user.ID)
+	if err != nil {
+		return "", errors.New("failed to fetch user roles")
+	}
+	for _, role := range roles {
+		roleService := userservices.NewRoleService(s.userCollection.Database())
+		roleObj, err := roleService.GetByID(role.RoleID)
+		if err != nil {
+			return "", errors.New("failed to fetch user roles")
+		}
+		claims["roles"] = append(claims["roles"].([]string), roleObj.Name)
+	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {

@@ -64,6 +64,7 @@ func AuthMiddleware() gin.HandlerFunc {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid roles in token claims"})
 				return
 			}
+			fmt.Println("Roles from token claims:", roles)
 			c.Set("roles", roles)
 
 			// Optionally fetch user details from the database here if needed for every request
