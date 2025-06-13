@@ -94,6 +94,9 @@ func main() {
 			admin.GET("/order-types/:id", orderTypeService.GetByID)
 			admin.PUT("/order-types/:id", orderTypeService.Update)
 			admin.DELETE("/order-types/:id", orderTypeService.Delete)
+
+			// List users by role (admin/super_admin only)
+			admin.GET("/users", userHandler.ListUsersByRole)
 		}
 
 		// Writer Specific Routes

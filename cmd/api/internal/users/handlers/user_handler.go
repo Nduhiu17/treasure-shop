@@ -6,17 +6,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
+	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserHandler struct {
 	orderService *services.OrderService
+	userService  *userservices.UserService
 }
 
 func NewUserHandler(client *mongo.Client, dbName string) *UserHandler {
+	db := client.Database(dbName)
 	return &UserHandler{
-		orderService: services.NewOrderService(client.Database(dbName)),
+		orderService: services.NewOrderService(db),
+		userService:  userservices.NewUserService(db),
 	}
 }
 
@@ -74,4 +78,18 @@ func (h *UserHandler) GetUserOrders(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, orders)
+}
+
+func (h *UserHandler) ListUsersByRole(c *gin.Context) {
+	role := c.Query("role")
+	if role == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "role query parameter is required (admin, user, super_admin)"})
+		return
+	}
+	users, err := h.userService.GetUsersByRole(role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users by role"})
+		return
+	}
+	c.JSON(http.StatusOK, users)
 }

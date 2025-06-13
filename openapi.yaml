@@ -288,9 +288,23 @@ components:
     User:
       type: object
       properties:
+        id:
+          type: string
         email:
           type: string
+        username:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
         password:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        tier:
           type: string
     UserLogin:
       type: object
