@@ -13,6 +13,8 @@ import (
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	uhandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/handlers"
 	whandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/writers/handlers"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -52,6 +54,12 @@ func main() {
 	// Public Routes
 	r.POST("/auth/register", authHandler.Register)
 	r.POST("/auth/login", authHandler.Login)
+
+	// Serve OpenAPI YAML directly
+	r.StaticFile("/openapi.yaml", "./openapi.yaml")
+
+	// Serve Swagger UI (using gin-swagger)
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/openapi.yaml")))
 
 	// Protected Routes
 	protected := r.Group("/api")

@@ -1,0 +1,340 @@
+openapi: 3.0.3
+info:
+  title: Treasure Shop API
+  version: 1.0.0
+  description: API documentation for the Treasure Shop backend
+servers:
+  - url: http://localhost:8080
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Registration successful
+        '400':
+          description: Bad request
+  /auth/login:
+    post:
+      summary: Login and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+  /api/orders:
+    post:
+      summary: Create a new order
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: Order created
+        '400':
+          description: Bad request
+    get:
+      summary: Get current user's orders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of orders
+  /api/writers:
+    post:
+      summary: Create a writer (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Writer created
+    get:
+      summary: List all writers (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of writers
+  /api/writers/{id}:
+    get:
+      summary: Get writer by ID (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Writer details
+    put:
+      summary: Update writer (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Writer updated
+    delete:
+      summary: Delete writer (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Writer deleted
+  /api/admin/orders:
+    get:
+      summary: List all orders (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of orders
+  /api/admin/orders/submitted:
+    get:
+      summary: List submitted orders (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of submitted orders
+  /api/admin/orders/{id}/assign:
+    put:
+      summary: Assign order to writer (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                writer_id:
+                  type: string
+      responses:
+        '200':
+          description: Order assigned
+  /api/admin/order-types:
+    post:
+      summary: Create order type (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+      responses:
+        '201':
+          description: Order type created
+    get:
+      summary: List order types (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of order types
+  /api/admin/order-types/{id}:
+    get:
+      summary: Get order type by ID (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order type details
+    put:
+      summary: Update order type (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderType'
+      responses:
+        '200':
+          description: Order type updated
+    delete:
+      summary: Delete order type (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order type deleted
+  /api/writer/orders/{id}/submit:
+    post:
+      summary: Submit order as writer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Order submitted
+  /api/orders/{id}/review/approve:
+    put:
+      summary: Approve order (user)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order approved
+  /api/orders/{id}/review/feedback:
+    put:
+      summary: Provide feedback for order (user)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback:
+                  type: string
+      responses:
+        '200':
+          description: Feedback submitted
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    UserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    Order:
+      type: object
+      properties:
+        user_id:
+          type: string
+        order_type_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        status:
+          type: string
+        writer_id:
+          type: string
+        submission_date:
+          type: string
+          format: date-time
+        feedback:
+          type: string
+    OrderType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
