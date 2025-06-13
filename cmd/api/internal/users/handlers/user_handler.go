@@ -14,7 +14,7 @@ type UserHandler struct {
 	orderService *services.OrderService
 }
 
-func NewUserHandler(client *mongo.Client,dbName string) *UserHandler {
+func NewUserHandler(client *mongo.Client, dbName string) *UserHandler {
 	return &UserHandler{
 		orderService: services.NewOrderService(client.Database(dbName)),
 	}
@@ -39,6 +39,11 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 	order.UserID = userOID
+	// Ensure OrderTypeID is provided and valid
+	if order.OrderTypeID.IsZero() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OrderTypeID is required"})
+		return
+	}
 	order.Status = "pending_payment" // Initial status
 
 	if err := h.orderService.CreateOrder(&order); err != nil {

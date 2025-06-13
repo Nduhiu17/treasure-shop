@@ -6,12 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	ahandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/auth/handlers"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/auth/middleware"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/database"
-	ahandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/auth/handlers"
+	ohandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/handlers"
+	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	uhandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/handlers"
 	whandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/writers/handlers"
-	ohandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/handlers"
 )
 
 func main() {
@@ -41,6 +42,12 @@ func main() {
 	userHandler := uhandlers.NewUserHandler(client, dbName)
 	writerHandler := whandlers.NewWriterHandler(client, dbName)
 	orderHandler := ohandlers.NewOrderHandler(client, dbName)
+
+	// OrderType Service/Handler
+	orderTypeCol := client.Database(dbName).Collection("order_types")
+	orderTypeService := ohandlers.NewOrderTypeHandler(
+		services.NewOrderTypeService(orderTypeCol),
+	)
 
 	// Public Routes
 	r.POST("/auth/register", authHandler.Register)
@@ -72,6 +79,13 @@ func main() {
 			admin.GET("/orders", orderHandler.ListOrders)
 			admin.GET("/orders/submitted", orderHandler.ListSubmittedOrders)
 			admin.PUT("/orders/:id/assign", orderHandler.AssignOrder)
+
+			// OrderType CRUD (admin only)
+			admin.POST("/order-types", orderTypeService.Create)
+			admin.GET("/order-types", orderTypeService.List)
+			admin.GET("/order-types/:id", orderTypeService.GetByID)
+			admin.PUT("/order-types/:id", orderTypeService.Update)
+			admin.DELETE("/order-types/:id", orderTypeService.Delete)
 		}
 
 		// Writer Specific Routes
