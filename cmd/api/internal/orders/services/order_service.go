@@ -38,6 +38,7 @@ func (s *OrderService) GetAllOrders() ([]models.Order, error) {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
+	
 
 	var orders []models.Order
 	if err := cursor.All(ctx, &orders); err != nil {
