@@ -165,8 +165,9 @@ func (h *OrderHandler) ProvideFeedback(c *gin.Context) {
 
 // WriterAssignmentResponseRequest is the request body for writer assignment response
 // Accept: true to accept, false to decline
+//
 type WriterAssignmentResponseRequest struct {
-	Accept *bool `json:"accept" binding:"required"`
+	Accept bool `json:"accept" binding:"required"`
 }
 
 // WriterAcceptAssignment allows a writer to accept or decline an order assignment
@@ -197,11 +198,7 @@ func (h *OrderHandler) WriterAcceptAssignment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if req.Accept == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "accept field is required and must be true or false"})
-		return
-	}
-	if err := h.service.WriterAssignmentResponse(orderOID, writerOID, *req.Accept); err != nil {
+	if err := h.service.WriterAssignmentResponse(orderOID, writerOID, req.Accept); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update assignment status", "details": err.Error()})
 		return
 	}
