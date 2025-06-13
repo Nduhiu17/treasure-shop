@@ -13,7 +13,7 @@ type OrderHandler struct {
 	service *services.OrderService
 }
 
-func NewOrderHandler(client *mongo.Client,dbName string) *OrderHandler {
+func NewOrderHandler(client *mongo.Client, dbName string) *OrderHandler {
 	return &OrderHandler{
 		service: services.NewOrderService(client.Database(dbName)),
 	}
@@ -161,4 +161,49 @@ func (h *OrderHandler) ProvideFeedback(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Feedback submitted"})
+}
+
+// WriterAssignmentResponseRequest is the request body for writer assignment response
+// Accept: true to accept, false to decline
+type WriterAssignmentResponseRequest struct {
+	Accept *bool `json:"accept" binding:"required"`
+}
+
+// WriterAcceptAssignment allows a writer to accept or decline an order assignment
+func (h *OrderHandler) WriterAcceptAssignment(c *gin.Context) {
+	orderID := c.Param("id")
+	orderOID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID format"})
+		return
+	}
+	userIDInterface, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+	userID, ok := userIDInterface.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID in context is not a string"})
+		return
+	}
+	writerOID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid writer ID format"})
+		return
+	}
+	var req WriterAssignmentResponseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.Accept == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "accept field is required and must be true or false"})
+		return
+	}
+	if err := h.service.WriterAssignmentResponse(orderOID, writerOID, *req.Accept); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update assignment status", "details": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Assignment response recorded"})
 }

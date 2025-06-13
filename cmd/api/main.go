@@ -134,6 +134,7 @@ func main() {
 		writer.Use(middleware.WriterRoleMiddleware())
 		{
 			writer.POST("/orders/:id/submit", orderHandler.SubmitOrder)
+			writer.PUT("/orders/:id/assignment-response", orderHandler.WriterAcceptAssignment)
 		}
 
 		// Order Review Routes (User protected for approval/feedback)

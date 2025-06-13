@@ -191,3 +191,26 @@ func (s *OrderService) ProvideFeedback(orderID, userID primitive.ObjectID, feedb
 	)
 	return err
 }
+
+func (s *OrderService) WriterAssignmentResponse(orderID, writerID primitive.ObjectID, accept bool) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if accept {
+		// Writer accepts: set status to assigned and update assignment_date
+		_, err := s.orderCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": orderID, "writer_id": writerID, "status": "awaiting_asign_acceptance"},
+			bson.M{"$set": bson.M{"status": "assigned", "assignment_date": time.Now()}},
+		)
+		return err
+	} else {
+		// Writer declines: set status back to paid, clear writer_id and assignment_date
+		_, err := s.orderCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": orderID, "writer_id": writerID, "status": "awaiting_asign_acceptance"},
+			bson.M{"$set": bson.M{"status": "paid"}, "$unset": bson.M{"writer_id": "", "assignment_date": ""}},
+		)
+		return err
+	}
+}
