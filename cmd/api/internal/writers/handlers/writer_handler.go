@@ -44,7 +44,9 @@ func (h *WriterHandler) CreateWriter(c *gin.Context) {
 }
 
 func (h *WriterHandler) ListWriters(c *gin.Context) {
-	writers, err := h.service.GetUsersByRole("writer")
+	userRoleService := services.NewUserRoleService(h.db)
+	roleService := services.NewRoleService(h.db)
+	writers, err := h.service.GetUsersByRole("writer", userRoleService, roleService)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list writers"})
 		return

@@ -38,6 +38,7 @@ func registerRoleRoutes(r *gin.Engine, db *mongo.Database) {
 		admin.POST("/user-roles", userRoleHandler.Create)
 		admin.GET("/user-roles", userRoleHandler.List)
 		admin.GET("/user-roles/user/:user_id", userRoleHandler.GetByUserID)
+		admin.POST("/user-roles/assign", userRoleHandler.AssignRoleToUser)
 		admin.DELETE("/user-roles/:id", userRoleHandler.Delete)
 	}
 }

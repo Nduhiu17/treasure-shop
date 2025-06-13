@@ -76,19 +76,43 @@ func (s *UserService) GetUserByID(id primitive.ObjectID) (*models.User, error) {
 	return &user, err
 }
 
-func (s *UserService) GetUsersByRole(role string) ([]models.User, error) {
+// Deprecated: This method is no longer valid as roles are managed via user_roles
+// func (s *UserService) GetUsersByRole(role string) ([]models.User, error) {
+// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+// 	defer cancel()
+//
+// 	cursor, err := s.userCollection.Find(ctx, bson.M{"roles": role})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer cursor.Close(ctx)
+//
+// 	var users []models.User
+// 	if err := cursor.All(ctx, &users); err != nil {
+// 		return nil, err
+// 	}
+// 	return users, nil
+// }
+
+func (s *UserService) GetUsersByRole(roleName string, userRoleService *UserRoleService, roleService *RoleService) ([]models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	cursor, err := s.userCollection.Find(ctx, bson.M{"roles": role})
+	role, err := roleService.GetByName(roleName)
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
-
-	var users []models.User
-	if err := cursor.All(ctx, &users); err != nil {
+	userRoles, err := userRoleService.GetByRoleID(role.ID)
+	if err != nil {
 		return nil, err
+	}
+	var users []models.User
+	for _, ur := range userRoles {
+		var user models.User
+		err := s.userCollection.FindOne(ctx, bson.M{"_id": ur.UserID}).Decode(&user)
+		if err == nil {
+			users = append(users, user)
+		}
 	}
 	return users, nil
 }
@@ -107,8 +131,8 @@ func (s *UserService) UpdateUser(user *models.User) error {
 			return err
 		}
 		update["password"] = string(hashedPassword)
+		// Remove roles update logic since roles are now managed via user_roles
 	}
-	// Remove roles update logic since roles are now managed via user_roles
 
 	_, err := s.userCollection.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": update})
 	return err

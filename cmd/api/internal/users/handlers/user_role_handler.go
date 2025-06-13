@@ -65,3 +65,34 @@ func (h *UserRoleHandler) Delete(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "UserRole deleted"})
 }
+
+// Add endpoint to assign a role to a user (user can have multiple roles)
+func (h *UserRoleHandler) AssignRoleToUser(c *gin.Context) {
+	var req struct {
+		UserID string `json:"user_id" binding:"required"`
+		RoleID string `json:"role_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userID, err := primitive.ObjectIDFromHex(req.UserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id format"})
+		return
+	}
+	roleID, err := primitive.ObjectIDFromHex(req.RoleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role_id format"})
+		return
+	}
+	userRole := &models.UserRole{
+		UserID: userID,
+		RoleID: roleID,
+	}
+	if err := h.service.Create(userRole); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign role"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Role assigned to user successfully"})
+}

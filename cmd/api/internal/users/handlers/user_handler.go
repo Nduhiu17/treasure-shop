@@ -12,15 +12,19 @@ import (
 )
 
 type UserHandler struct {
-	orderService *services.OrderService
-	userService  *userservices.UserService
+	orderService    *services.OrderService
+	userService     *userservices.UserService
+	userRoleService *userservices.UserRoleService
+	roleService     *userservices.RoleService
 }
 
 func NewUserHandler(client *mongo.Client, dbName string) *UserHandler {
 	db := client.Database(dbName)
 	return &UserHandler{
-		orderService: services.NewOrderService(db),
-		userService:  userservices.NewUserService(db),
+		orderService:    services.NewOrderService(db),
+		userService:     userservices.NewUserService(db),
+		userRoleService: userservices.NewUserRoleService(db),
+		roleService:     userservices.NewRoleService(db),
 	}
 }
 
@@ -86,7 +90,7 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "role query parameter is required (admin, user, super_admin)"})
 		return
 	}
-	users, err := h.userService.GetUsersByRole(role)
+	users, err := h.userService.GetUsersByRole(role, h.userRoleService, h.roleService)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users by role"})
 		return

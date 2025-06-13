@@ -45,6 +45,25 @@ func (s *UserRoleService) GetByUserID(userID primitive.ObjectID) ([]models.UserR
 	return userRoles, nil
 }
 
+func (s *UserRoleService) GetByRoleID(roleID primitive.ObjectID) ([]models.UserRole, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cur, err := s.col.Find(ctx, bson.M{"role_id": roleID})
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	var userRoles []models.UserRole
+	for cur.Next(ctx) {
+		var ur models.UserRole
+		if err := cur.Decode(&ur); err != nil {
+			return nil, err
+		}
+		userRoles = append(userRoles, ur)
+	}
+	return userRoles, nil
+}
+
 func (s *UserRoleService) List() ([]models.UserRole, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
