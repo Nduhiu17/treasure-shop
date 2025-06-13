@@ -10,6 +10,7 @@ type User struct {
 	LastName  string             `bson:"last_name" json:"last_name" binding:"required"`
 	Password  string             `bson:"password" json:"-" binding:"required"`
 	Tier      string             `bson:"tier,omitempty" json:"tier,omitempty"`
+	Roles     []string           `bson:"-" json:"roles,omitempty"`
 }
 
 // Role struct for roles collection

@@ -95,5 +95,20 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users by role"})
 		return
 	}
+	// Populate roles for each user
+	for i := range users {
+		userRoles, err := h.userRoleService.GetByUserID(users[i].ID)
+		if err != nil {
+			continue // skip if error
+		}
+		var roleNames []string
+		for _, ur := range userRoles {
+			roleObj, err := h.roleService.GetByID(ur.RoleID)
+			if err == nil {
+				roleNames = append(roleNames, roleObj.Name)
+			}
+		}
+		users[i].Roles = roleNames
+	}
 	c.JSON(http.StatusOK, users)
 }
