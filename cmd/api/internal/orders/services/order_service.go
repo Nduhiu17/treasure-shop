@@ -115,11 +115,10 @@ func (s *OrderService) AssignOrder(orderID, writerID primitive.ObjectID) error {
 		return errors.New("writer not found")
 	}
 
-	_, err = s.orderCollection.UpdateOne(
-		ctx,
-		bson.M{"_id": orderID, "status": "paid"},
-		bson.M{"$set": bson.M{"writer_id": writerID, "status": "awaiting_asign_acceptance", "assignment_date": time.Now()}},
-	)
+	// Allow reassignment if order is in 'paid' or 'feedback' status
+	filter := bson.M{"_id": orderID, "$or": []bson.M{{"status": "paid"}, {"status": "feedback"}}}
+	update := bson.M{"$set": bson.M{"writer_id": writerID, "status": "awaiting_asign_acceptance", "assignment_date": time.Now()}}
+	_, err = s.orderCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return errors.New("order already assigned to a writer")
@@ -144,7 +143,7 @@ func (s *OrderService) SubmitOrder(orderID primitive.ObjectID, writerID primitiv
 	_, err := s.orderCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": orderID},
-		bson.M{"$set": bson.M{"status": "submitted_for_review","content":content,"submission_date": time.Now()}},
+		bson.M{"$set": bson.M{"status": "submitted_for_review", "content": content, "submission_date": time.Now()}},
 	)
 	if err != nil {
 		return err
@@ -152,9 +151,6 @@ func (s *OrderService) SubmitOrder(orderID primitive.ObjectID, writerID primitiv
 
 	// In a real application, you would likely create a 'Review' record here as well.
 	// This could include the content submitted by the writer, the order ID, and any other relevant details.
-	
-
-
 
 	// For this basic example, we'll just update the order status.
 
@@ -174,7 +170,7 @@ func (s *OrderService) ApproveOrder(orderID, userID primitive.ObjectID) error {
 	_, err := s.orderCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": orderID},
-		bson.M{"$set": bson.M{"status": "approved"}},
+		bson.M{"$set": bson.M{"status": "approved", "approval_date": time.Now()}},
 	)
 	return err
 }
@@ -192,7 +188,7 @@ func (s *OrderService) ProvideFeedback(orderID, userID primitive.ObjectID, feedb
 	_, err := s.orderCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": orderID},
-		bson.M{"$set": bson.M{"status": "feedback", "feedback": feedback}},
+		bson.M{"$set": bson.M{"status": "feedback", "feedback": feedback,"feedback_date": time.Now()}},
 	)
 	return err
 }
@@ -206,7 +202,7 @@ func (s *OrderService) WriterAssignmentResponse(orderID, writerID primitive.Obje
 		_, err := s.orderCollection.UpdateOne(
 			ctx,
 			bson.M{"_id": orderID, "writer_id": writerID, "status": "awaiting_asign_acceptance"},
-			bson.M{"$set": bson.M{"status": "assigned", "assignment_date": time.Now()}},
+			bson.M{"$set": bson.M{"status": "assigned", "assignment_acceptance_date": time.Now()}},
 		)
 		return err
 	} else {
@@ -214,7 +210,7 @@ func (s *OrderService) WriterAssignmentResponse(orderID, writerID primitive.Obje
 		_, err := s.orderCollection.UpdateOne(
 			ctx,
 			bson.M{"_id": orderID, "writer_id": writerID, "status": "awaiting_asign_acceptance"},
-			bson.M{"$set": bson.M{"status": "paid"}, "$unset": bson.M{"writer_id": "", "assignment_date": ""}},
+			bson.M{"$set": bson.M{"status": "paid"}, "$unset": bson.M{"writer_id": "", "assignment_date": "","assignment_decline_date": time.Now()}},
 		)
 		return err
 	}
