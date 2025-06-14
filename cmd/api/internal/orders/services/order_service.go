@@ -27,6 +27,7 @@ func NewOrderService(db *mongo.Database) *OrderService {
 func (s *OrderService) CreateOrder(order *models.Order) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	order.ApplyFeedbackRequests = 0 // Default to zero on creation
 	fmt.Println("Creating order:", order)
 	_, err := s.orderCollection.InsertOne(ctx, order)
 	return err
@@ -185,10 +186,22 @@ func (s *OrderService) ProvideFeedback(orderID, userID primitive.ObjectID, feedb
 		return errors.New("order not found or not awaiting feedback from this user")
 	}
 
-	_, err := s.orderCollection.UpdateOne(
+	// Increment apply_feedback_requests when feedback is requested
+	// Take the current number of requests of the order and increment it by 1
+	feedbackCount := 0
+	err := s.orderCollection.FindOne(ctx, bson.M{"_id": orderID}).Decode(&bson.M{"apply_feedback_requests": &feedbackCount})
+	if err != nil {
+		return errors.New("failed to retrieve current feedback request count")
+	}
+	
+	if feedbackCount >= 4 {
+		return errors.New("feedback request limit reached for this order")
+	}
+	// Update the order status to 'feedback' and set the feedback
+	_, err = s.orderCollection.UpdateOne(
 		ctx,
-		bson.M{"_id": orderID},
-		bson.M{"$set": bson.M{"status": "feedback", "feedback": feedback,"feedback_date": time.Now()}},
+		bson.M{"_id": orderID, "user_id": userID, "status": "submitted_for_review"},
+		bson.M{"$set": bson.M{"status": "feedback", "feedback": feedback, "feedback_date": time.Now()}, "$inc": bson.M{"apply_feedback_requests": feedbackCount + 1}},
 	)
 	return err
 }
@@ -210,7 +223,7 @@ func (s *OrderService) WriterAssignmentResponse(orderID, writerID primitive.Obje
 		_, err := s.orderCollection.UpdateOne(
 			ctx,
 			bson.M{"_id": orderID, "writer_id": writerID, "status": "awaiting_asign_acceptance"},
-			bson.M{"$set": bson.M{"status": "paid"}, "$unset": bson.M{"writer_id": "", "assignment_date": "","assignment_decline_date": time.Now()}},
+			bson.M{"$set": bson.M{"status": "paid"}, "$unset": bson.M{"writer_id": "", "assignment_date": "", "assignment_decline_date": time.Now()}},
 		)
 		return err
 	}
