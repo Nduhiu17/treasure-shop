@@ -108,6 +108,41 @@ func (s *OrderService) GetOrdersByStatus(status string) ([]models.Order, error) 
 	return orders, nil
 }
 
+// GetOrdersFiltered returns orders filtered by user_id, writer_id, and/or status (all are optional)
+func (s *OrderService) GetOrdersFiltered(userID, writerID *primitive.ObjectID, status *string, page, pageSize int) ([]models.Order, int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{}
+	if userID != nil {
+		filter["user_id"] = *userID
+	}
+	if writerID != nil {
+		filter["writer_id"] = *writerID
+	}
+	if status != nil && *status != "" {
+		filter["status"] = *status
+	}
+
+	skip := int64((page - 1) * pageSize)
+	limit := int64(pageSize)
+	total, err := s.orderCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	findOpts := options.Find().SetSkip(skip).SetLimit(limit).SetSort(bson.M{"created_at": -1})
+	cursor, err := s.orderCollection.Find(ctx, filter, findOpts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+	var orders []models.Order
+	if err := cursor.All(ctx, &orders); err != nil {
+		return nil, 0, err
+	}
+	return orders, total, nil
+}
+
 func (s *OrderService) AssignOrder(orderID, writerID primitive.ObjectID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

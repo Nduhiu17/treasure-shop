@@ -36,7 +36,26 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 	if pageSize < 1 || pageSize > 100 {
 		pageSize = 10
 	}
-	orders, total, err := h.service.GetAllOrdersPaginated(page, pageSize)
+
+	// Filtering params
+	var userIDPtr *primitive.ObjectID
+	var writerIDPtr *primitive.ObjectID
+	var statusPtr *string
+	if userID := c.Query("user_id"); userID != "" {
+		if oid, err := primitive.ObjectIDFromHex(userID); err == nil {
+			userIDPtr = &oid
+		}
+	}
+	if writerID := c.Query("writer_id"); writerID != "" {
+		if oid, err := primitive.ObjectIDFromHex(writerID); err == nil {
+			writerIDPtr = &oid
+		}
+	}
+	if status := c.Query("status"); status != "" {
+		statusPtr = &status
+	}
+
+	orders, total, err := h.service.GetOrdersFiltered(userIDPtr, writerIDPtr, statusPtr, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list orders"})
 		return

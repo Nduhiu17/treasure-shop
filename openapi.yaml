@@ -131,9 +131,24 @@ paths:
             minimum: 1
             maximum: 100
           description: Page size (default 10, max 100)
+        - in: query
+          name: user_id
+          schema:
+            type: string
+          description: Filter by user ID (optional)
+        - in: query
+          name: writer_id
+          schema:
+            type: string
+          description: Filter by writer ID (optional)
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Filter by order status (optional)
       responses:
         '200':
-          description: List of orders (paginated)
+          description: List of orders (paginated and filterable)
           content:
             application/json:
               schema:
