@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -95,7 +96,22 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "role query parameter is required (admin, user, super_admin)"})
 		return
 	}
-	users, err := h.userService.GetUsersByRole(role, h.userRoleService, h.roleService)
+	// Pagination params
+	page := 1
+	pageSize := 10
+	if p := c.Query("page"); p != "" {
+		fmt.Sscanf(p, "%d", &page)
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		fmt.Sscanf(ps, "%d", &pageSize)
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+	users, total, err := h.userService.GetUsersByRolePaginated(role, h.userRoleService, h.roleService, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users by role"})
 		return
@@ -115,5 +131,10 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 		}
 		users[i].Roles = roleNames
 	}
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, gin.H{
+		"users":     users,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	})
 }

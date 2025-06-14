@@ -117,6 +117,39 @@ func (s *UserService) GetUsersByRole(roleName string, userRoleService *UserRoleS
 	return users, nil
 }
 
+// GetUsersByRolePaginated returns users by role with pagination
+func (s *UserService) GetUsersByRolePaginated(roleName string, userRoleService *UserRoleService, roleService *RoleService, page, pageSize int) ([]models.User, int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	role, err := roleService.GetByName(roleName)
+	if err != nil {
+		return nil, 0, err
+	}
+	userRoles, err := userRoleService.GetByRoleID(role.ID)
+	if err != nil {
+		return nil, 0, err
+	}
+	var users []models.User
+	for _, ur := range userRoles {
+		var user models.User
+		err := s.userCollection.FindOne(ctx, bson.M{"_id": ur.UserID}).Decode(&user)
+		if err == nil {
+			users = append(users, user)
+		}
+	}
+	total := int64(len(users))
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start > len(users) {
+		return []models.User{}, total, nil
+	}
+	if end > len(users) {
+		end = len(users)
+	}
+	return users[start:end], total, nil
+}
+
 func (s *UserService) UpdateUser(user *models.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

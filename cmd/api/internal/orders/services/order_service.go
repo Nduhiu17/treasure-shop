@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type OrderService struct {
@@ -47,6 +48,32 @@ func (s *OrderService) GetAllOrders() ([]models.Order, error) {
 		return nil, err
 	}
 	return orders, nil
+}
+
+func (s *OrderService) GetAllOrdersPaginated(page, pageSize int) ([]models.Order, int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	skip := int64((page - 1) * pageSize)
+	limit := int64(pageSize)
+
+	total, err := s.orderCollection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	opts := options.Find().SetSkip(skip).SetLimit(limit).SetSort(bson.M{"created_at": -1})
+	cursor, err := s.orderCollection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx)
+
+	var orders []models.Order
+	if err := cursor.All(ctx, &orders); err != nil {
+		return nil, 0, err
+	}
+	return orders, total, nil
 }
 
 func (s *OrderService) GetOrdersByUserID(userID primitive.ObjectID) ([]models.Order, error) {
@@ -193,7 +220,7 @@ func (s *OrderService) ProvideFeedback(orderID, userID primitive.ObjectID, feedb
 	if err != nil {
 		return errors.New("failed to retrieve current feedback request count")
 	}
-	
+
 	if feedbackCount >= 4 {
 		return errors.New("feedback request limit reached for this order")
 	}

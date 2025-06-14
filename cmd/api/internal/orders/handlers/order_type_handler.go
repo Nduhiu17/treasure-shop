@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -74,12 +75,32 @@ func (h *OrderTypeHandler) GetByID(c *gin.Context) {
 }
 
 func (h *OrderTypeHandler) List(c *gin.Context) {
-	orderTypes, err := h.Service.List(context.Background())
+	// Pagination params
+	page := 1
+	pageSize := 10
+	if p := c.Query("page"); p != "" {
+		fmt.Sscanf(p, "%d", &page)
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		fmt.Sscanf(ps, "%d", &pageSize)
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+	orderTypes, total, err := h.Service.ListPaginated(context.Background(), page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, orderTypes)
+	c.JSON(http.StatusOK, gin.H{
+		"order_types": orderTypes,
+		"total":       total,
+		"page":        page,
+		"page_size":   pageSize,
+	})
 }
 
 func (h *OrderTypeHandler) Update(c *gin.Context) {

@@ -52,6 +52,38 @@ func (s *OrderTypeService) List(ctx context.Context) ([]models.OrderType, error)
 	return orderTypes, nil
 }
 
+// ListPaginated returns paginated order types and total count
+func (s *OrderTypeService) ListPaginated(ctx context.Context, page, pageSize int) ([]models.OrderType, int64, error) {
+	skip := int64((page - 1) * pageSize)
+	limit := int64(pageSize)
+	total, err := s.Collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return nil, 0, err
+	}
+	cur, err := s.Collection.Find(ctx, bson.M{}, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cur.Close(ctx)
+	var allOrderTypes []models.OrderType
+	for cur.Next(ctx) {
+		var ot models.OrderType
+		if err := cur.Decode(&ot); err != nil {
+			return nil, 0, err
+		}
+		allOrderTypes = append(allOrderTypes, ot)
+	}
+	start := int(skip)
+	end := start + int(limit)
+	if start > len(allOrderTypes) {
+		return []models.OrderType{}, total, nil
+	}
+	if end > len(allOrderTypes) {
+		end = len(allOrderTypes)
+	}
+	return allOrderTypes[start:end], total, nil
+}
+
 func (s *OrderTypeService) Update(ctx context.Context, id primitive.ObjectID, update bson.M) error {
 	update["updated_at"] = time.Now()
 	_, err := s.Collection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": update})
