@@ -67,6 +67,7 @@ func main() {
 	db := client.Database(dbName)
 	roleService := userservices.NewRoleService(db)
 	userRoleService := userservices.NewUserRoleService(db)
+	orderLevelService := services.NewOrderLevelService(db)
 
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -86,6 +87,7 @@ func main() {
 	userHandler := uhandlers.NewUserHandler(client, dbName)
 	writerHandler := whandlers.NewWriterHandler(client, dbName)
 	orderHandler := ohandlers.NewOrderHandler(client, dbName)
+	orderLevelHandler := ohandlers.NewOrderLevelHandler(orderLevelService)
 
 	// OrderType Service/Handler
 	orderTypeCol := client.Database(dbName).Collection("order_types")
@@ -102,6 +104,10 @@ func main() {
 
 	// Serve Swagger UI (using gin-swagger)
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("/openapi.yaml")))
+
+	// Public OrderLevel endpoints
+	r.GET("/api/order-levels", orderLevelHandler.List)
+	r.GET("/api/order-levels/:id", orderLevelHandler.GetByID)
 
 	// Protected Routes
 	protected := r.Group("/api")
@@ -122,7 +128,6 @@ func main() {
 			writers.DELETE("/:id", writerHandler.DeleteWriter)
 		}
 
-
 		// Admin Routes
 		admin := protected.Group("/admin")
 		admin.Use(middleware.AdminRoleMiddleware())
@@ -137,6 +142,11 @@ func main() {
 			admin.GET("/order-types/:id", orderTypeService.GetByID)
 			admin.PUT("/order-types/:id", orderTypeService.Update)
 			admin.DELETE("/order-types/:id", orderTypeService.Delete)
+
+			// OrderLevel CRUD (admin only)
+			admin.POST("/order-levels", orderLevelHandler.Create)
+			admin.PUT("/order-levels/:id", orderLevelHandler.Update)
+			admin.DELETE("/order-levels/:id", orderLevelHandler.Delete)
 
 			// List users by role (admin/super_admin only)
 			admin.GET("/users", userHandler.ListUsersByRole)

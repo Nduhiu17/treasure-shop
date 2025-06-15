@@ -20,4 +20,6 @@ type Order struct {
 	CreatedAt             time.Time           `bson:"created_at,omitempty" json:"created_at,omitempty"`
 	UpdatedAt             time.Time           `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 	ApplyFeedbackRequests int                 `bson:"apply_feedback_requests" json:"apply_feedback_requests"`
+	OrderLevelID          primitive.ObjectID  `bson:"order_level_id" json:"order_level_id" binding:"required"`
+	LevelName             string              `bson:"-" json:"level_name,omitempty"`
 }

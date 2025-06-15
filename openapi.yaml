@@ -383,6 +383,82 @@ paths:
                     type: integer
                   page_size:
                     type: integer
+  /api/order-levels:
+    get:
+      summary: List all order levels
+      responses:
+        '200':
+          description: List of order levels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderLevel'
+  /api/order-levels/{id}:
+    get:
+      summary: Get order level by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order level details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderLevel'
+  /api/admin/order-levels:
+    post:
+      summary: Create order level (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderLevel'
+      responses:
+        '201':
+          description: Order level created
+    
+  /api/admin/order-levels/{id}:
+    put:
+      summary: Update order level (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderLevel'
+      responses:
+        '200':
+          description: Order level updated
+    delete:
+      summary: Delete order level (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order level deleted
   /api/writer/orders/{id}/submit:
     post:
       summary: Submit order as writer
@@ -472,6 +548,12 @@ components:
           type: string
         order_type_id:
           type: string
+        order_level_id:
+          type: string
+          description: Foreign key to OrderLevel (required)
+        level_name:
+          type: string
+          description: Name of the order level (response only)
         title:
           type: string
         description:
@@ -488,6 +570,23 @@ components:
         feedback:
           type: string
     OrderType:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    OrderLevel:
       type: object
       properties:
         id:

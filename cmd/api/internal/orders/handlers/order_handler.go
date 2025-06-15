@@ -12,11 +12,13 @@ import (
 
 type OrderHandler struct {
 	service *services.OrderService
+	db      *mongo.Database
 }
 
 func NewOrderHandler(client *mongo.Client, dbName string) *OrderHandler {
 	return &OrderHandler{
 		service: services.NewOrderService(client.Database(dbName)),
+		db:      client.Database(dbName),
 	}
 }
 
@@ -60,6 +62,9 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list orders"})
 		return
 	}
+	// Populate LevelName
+	orderLevelService := services.NewOrderLevelService(h.db)
+	orders = services.PopulateOrderLevelNames(orders, orderLevelService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,
@@ -281,6 +286,9 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list orders for writer"})
 		return
 	}
+	// Populate LevelName
+	orderLevelService := services.NewOrderLevelService(h.db)
+	orders = services.PopulateOrderLevelNames(orders, orderLevelService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,
