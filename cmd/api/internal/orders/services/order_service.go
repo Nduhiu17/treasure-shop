@@ -294,9 +294,15 @@ func (s *OrderService) WriterAssignmentResponse(orderID, writerID primitive.Obje
 // Helper: populate LevelName for orders
 func PopulateOrderLevelNames(orders []models.Order, orderLevelService *OrderLevelService) []models.Order {
 	for i, order := range orders {
+		if order.OrderLevelID.IsZero() {
+			orders[i].LevelName = ""
+			continue
+		}
 		level, err := orderLevelService.GetByID(order.OrderLevelID)
-		if err == nil {
+		if err == nil && level != nil {
 			orders[i].LevelName = level.Name
+		} else {
+			orders[i].LevelName = ""
 		}
 	}
 	return orders
