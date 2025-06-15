@@ -122,6 +122,7 @@ func main() {
 			writers.DELETE("/:id", writerHandler.DeleteWriter)
 		}
 
+
 		// Admin Routes
 		admin := protected.Group("/admin")
 		admin.Use(middleware.AdminRoleMiddleware())
@@ -147,8 +148,9 @@ func main() {
 		{
 			writer.POST("/orders/:id/submit", orderHandler.SubmitOrder)
 			writer.PUT("/orders/:id/assignment-response", orderHandler.WriterAcceptAssignment)
-		}
+			writer.GET("/orders/:writer_id", orderHandler.GetOrdersByWriter)
 
+		}
 		// Order Review Routes (User protected for approval/feedback)
 		orderReview := protected.Group("/orders/:id/review")
 		orderReview.Use(middleware.AuthMiddleware())

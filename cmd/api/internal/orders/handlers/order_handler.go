@@ -243,3 +243,48 @@ func (h *OrderHandler) WriterAcceptAssignment(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Assignment response recorded"})
 }
+
+// GetOrdersByWriter returns all orders assigned to a specific writer
+func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
+	writerID := c.Param("writer_id")
+	if writerID == "" {
+		// Try to get from query param as fallback for misrouted requests
+		writerID = c.Query("writer_id")
+	}
+	fmt.Println("Writer ID:", writerID)
+	if len(writerID) != 24 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid writer ID format. Must be a 24-character hex string ObjectID."})
+		return
+	}
+	writerOID, err := primitive.ObjectIDFromHex(writerID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid writer ID format. Must be a valid hex ObjectID."})
+		return
+	}
+	// Optional pagination
+	page := 1
+	pageSize := 10
+	if p := c.Query("page"); p != "" {
+		fmt.Sscanf(p, "%d", &page)
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		fmt.Sscanf(ps, "%d", &pageSize)
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+	orders, total, err := h.service.GetOrdersFiltered(nil, &writerOID, nil, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list orders for writer"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"orders":    orders,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	})
+}

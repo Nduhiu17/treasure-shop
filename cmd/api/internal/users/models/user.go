@@ -8,7 +8,7 @@ type User struct {
 	Username  string             `bson:"username" json:"username" binding:"required"`
 	FirstName string             `bson:"first_name" json:"first_name" binding:"required"`
 	LastName  string             `bson:"last_name" json:"last_name" binding:"required"`
-	Password  string             `bson:"password" json:"-" binding:"required"`
+	Password  string             `bson:"password" json:"password" binding:"required"`
 	Tier      string             `bson:"tier,omitempty" json:"tier,omitempty"`
 	Roles     []string           `bson:"-" json:"roles,omitempty"`
 }

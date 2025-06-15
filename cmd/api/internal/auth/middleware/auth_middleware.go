@@ -110,6 +110,8 @@ func AdminRoleMiddleware() gin.HandlerFunc {
 func WriterRoleMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		roles, ok := c.Get("roles")
+		fmt.Println("Checking writer role middleware",ok, roles)
+
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})
 			return
