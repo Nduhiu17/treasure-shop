@@ -29,4 +29,6 @@ type Order struct {
 	IsHighPriority        bool                `bson:"is_high_priority" json:"is_high_priority"`
 	OrderStyleID          primitive.ObjectID  `bson:"order_style_id" json:"order_style_id" binding:"required"`
 	OrderStyleName        string              `bson:"-" json:"order_style_name,omitempty"`
+	OrderLanguageID       primitive.ObjectID  `bson:"order_language_id" json:"order_language_id" binding:"required"`
+	OrderLanguageName     string              `bson:"-" json:"order_language_name,omitempty"`
 }

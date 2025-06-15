@@ -740,6 +740,12 @@ components:
         is_high_priority:
           type: boolean
           description: Whether the order is high priority (required)
+        order_language_id:
+          type: string
+          description: Foreign key to OrderLanguage (required)
+        order_language_name:
+          type: string
+          description: Name of the order language (response only)
     OrderType:
       type: object
       properties:
@@ -801,6 +807,15 @@ components:
         description:
           type: string
     OrderStyle:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    OrderLanguage:
       type: object
       properties:
         id:

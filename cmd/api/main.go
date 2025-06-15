@@ -71,6 +71,7 @@ func main() {
 	orderPagesService := services.NewOrderPagesService(db)
 	orderUrgencyService := services.NewOrderUrgencyService(db)
 	orderStyleService := services.NewOrderStyleService(db)
+	orderLanguageService := services.NewOrderLanguageService(db)
 
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -94,6 +95,7 @@ func main() {
 	orderPagesHandler := ohandlers.NewOrderPagesHandler(orderPagesService)
 	orderUrgencyHandler := ohandlers.NewOrderUrgencyHandler(orderUrgencyService)
 	orderStyleHandler := ohandlers.NewOrderStyleHandler(orderStyleService)
+	orderLanguageHandler := ohandlers.NewOrderLanguageHandler(orderLanguageService)
 
 	// OrderType Service/Handler
 	orderTypeCol := client.Database(dbName).Collection("order_types")
@@ -126,6 +128,10 @@ func main() {
 	// Public OrderStyle endpoints
 	r.GET("/api/order-styles", orderStyleHandler.List)
 	r.GET("/api/order-styles/:id", orderStyleHandler.GetByID)
+
+	// Public OrderLanguage endpoints
+	r.GET("/api/order-languages", orderLanguageHandler.List)
+	r.GET("/api/order-languages/:id", orderLanguageHandler.GetByID)
 
 	// Protected Routes
 	protected := r.Group("/api")
@@ -180,6 +186,11 @@ func main() {
 			admin.POST("/order-styles", orderStyleHandler.Create)
 			admin.PUT("/order-styles/:id", orderStyleHandler.Update)
 			admin.DELETE("/order-styles/:id", orderStyleHandler.Delete)
+
+			// OrderLanguage CRUD (admin only)
+			admin.POST("/order-languages", orderLanguageHandler.Create)
+			admin.PUT("/order-languages/:id", orderLanguageHandler.Update)
+			admin.DELETE("/order-languages/:id", orderLanguageHandler.Delete)
 
 			// List users by role (admin/super_admin only)
 			admin.GET("/users", userHandler.ListUsersByRole)

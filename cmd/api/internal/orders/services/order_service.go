@@ -358,3 +358,20 @@ func PopulateOrderStyleNames(orders []models.Order, orderStyleService *OrderStyl
 	}
 	return orders
 }
+
+// Helper: populate OrderLanguageName for orders
+func PopulateOrderLanguageNames(orders []models.Order, orderLanguageService *OrderLanguageService) []models.Order {
+	for i, order := range orders {
+		if order.OrderLanguageID.IsZero() {
+			orders[i].OrderLanguageName = ""
+			continue
+		}
+		lang, err := orderLanguageService.GetByID(order.OrderLanguageID)
+		if err == nil && lang != nil {
+			orders[i].OrderLanguageName = lang.Name
+		} else {
+			orders[i].OrderLanguageName = ""
+		}
+	}
+	return orders
+}
