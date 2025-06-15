@@ -81,6 +81,15 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "OrderStyleID is required"})
 		return
 	}
+	// Set default values for new boolean fields
+	order.TopWriter = false
+	order.PlagarismReport = false
+	order.OnePageSummary = false
+	order.ExtraQualityCheck = false
+	order.InitialDraft = false
+	order.SmsUpdate = false
+	order.FullTextCopySources = false
+	order.SamePaperFromAnotherWriter = false
 	order.Status = "pending_payment" // Initial status
 
 	if err := h.orderService.CreateOrder(&order); err != nil {
