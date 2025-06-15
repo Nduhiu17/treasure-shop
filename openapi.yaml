@@ -731,6 +731,9 @@ components:
           format: date-time
         feedback:
           type: string
+        is_high_priority:
+          type: boolean
+          description: Whether the order is high priority (required)
     OrderType:
       type: object
       properties:

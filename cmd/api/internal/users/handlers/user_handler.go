@@ -52,6 +52,18 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 		return
 	}
 	fmt.Printf("[DEBUG] Incoming order payload: %+v\n", order)
+	// Validate is_high_priority is present in the request (required)
+	if c.Request.Method == "POST" && c.FullPath() == "/api/orders" {
+		if c.PostForm("is_high_priority") == "" && !order.IsHighPriority {
+			// If not present in JSON, and not set to true, default to false
+			order.IsHighPriority = false
+		}
+	}
+	// Enforce that is_high_priority is present (even if false)
+	if c.Request.Method == "POST" && c.FullPath() == "/api/orders" && (order.IsHighPriority != true && order.IsHighPriority != false) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "is_high_priority is required (true or false)"})
+		return
+	}
 	order.UserID = userOID
 	order.WriterID = nil // Set WriterID to nil so it is omitted or null in JSON if not assigned
 	// Ensure OrderTypeID is provided and valid

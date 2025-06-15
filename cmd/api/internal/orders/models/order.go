@@ -26,4 +26,5 @@ type Order struct {
 	OrderPagesName        string              `bson:"-" json:"order_pages_name,omitempty"`
 	OrderUrgencyID        primitive.ObjectID  `bson:"order_urgency_id" json:"order_urgency_id" binding:"required"`
 	OrderUrgencyName      string              `bson:"-" json:"order_urgency_name,omitempty"`
+	IsHighPriority        bool                `bson:"is_high_priority" json:"is_high_priority"`
 }
