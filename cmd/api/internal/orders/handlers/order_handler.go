@@ -65,6 +65,9 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 	// Populate LevelName
 	orderLevelService := services.NewOrderLevelService(h.db)
 	orders = services.PopulateOrderLevelNames(orders, orderLevelService)
+	// Populate OrderPagesName
+	orderPagesService := services.NewOrderPagesService(h.db)
+	orders = services.PopulateOrderPagesNames(orders, orderPagesService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,
@@ -289,6 +292,9 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 	// Populate LevelName
 	orderLevelService := services.NewOrderLevelService(h.db)
 	orders = services.PopulateOrderLevelNames(orders, orderLevelService)
+	// Populate OrderPagesName
+	orderPagesService := services.NewOrderPagesService(h.db)
+	orders = services.PopulateOrderPagesNames(orders, orderPagesService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,

@@ -22,4 +22,6 @@ type Order struct {
 	ApplyFeedbackRequests int                 `bson:"apply_feedback_requests" json:"apply_feedback_requests"`
 	OrderLevelID          primitive.ObjectID  `bson:"order_level_id" json:"order_level_id" binding:"required"`
 	LevelName             string              `bson:"-" json:"level_name,omitempty"`
+	OrderPagesID          primitive.ObjectID  `bson:"order_pages_id" json:"order_pages_id" binding:"required"`
+	OrderPagesName        string              `bson:"-" json:"order_pages_name,omitempty"`
 }

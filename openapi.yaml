@@ -505,6 +505,81 @@ paths:
       responses:
         '200':
           description: Assignment response recorded
+  /api/order-pages:
+    get:
+      summary: List all order pages
+      responses:
+        '200':
+          description: List of order pages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderPages'
+  /api/order-pages/{id}:
+    get:
+      summary: Get order pages by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order pages details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPages'
+  /api/admin/order-pages:
+    post:
+      summary: Create order pages (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderPages'
+      responses:
+        '201':
+          description: Order pages created
+  /api/admin/order-pages/{id}:
+    put:
+      summary: Update order pages (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderPages'
+      responses:
+        '200':
+          description: Order pages updated
+    delete:
+      summary: Delete order pages (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order pages deleted
 components:
   securitySchemes:
     bearerAuth:
@@ -554,6 +629,12 @@ components:
         level_name:
           type: string
           description: Name of the order level (response only)
+        order_pages_id:
+          type: string
+          description: Foreign key to OrderPages (required)
+        order_pages_name:
+          type: string
+          description: Name of the order pages (response only)
         title:
           type: string
         description:
@@ -587,6 +668,23 @@ components:
           type: string
           format: date-time
     OrderLevel:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    OrderPages:
       type: object
       properties:
         id:

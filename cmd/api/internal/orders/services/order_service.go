@@ -307,3 +307,20 @@ func PopulateOrderLevelNames(orders []models.Order, orderLevelService *OrderLeve
 	}
 	return orders
 }
+
+// Helper: populate OrderPagesName for orders
+func PopulateOrderPagesNames(orders []models.Order, orderPagesService *OrderPagesService) []models.Order {
+	for i, order := range orders {
+		if order.OrderPagesID.IsZero() {
+			orders[i].OrderPagesName = ""
+			continue
+		}
+		pages, err := orderPagesService.GetByID(order.OrderPagesID)
+		if err == nil && pages != nil {
+			orders[i].OrderPagesName = pages.Name
+		} else {
+			orders[i].OrderPagesName = ""
+		}
+	}
+	return orders
+}
