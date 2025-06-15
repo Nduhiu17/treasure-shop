@@ -746,6 +746,37 @@ components:
         order_language_name:
           type: string
           description: Name of the order language (response only)
+        no_of_sources:
+          type: integer
+          description: Number of sources for the order (default 0)
+        preferred_writer_number:
+          type: integer
+          nullable: true
+          description: Preferred writer number (optional)
+        top_writer:
+          type: boolean
+          description: Top writer (default false)
+        plagarism_report:
+          type: boolean
+          description: Plagarism report (default false)
+        one_page_summary:
+          type: boolean
+          description: One page summary (default false)
+        extra_quality_check:
+          type: boolean
+          description: Extra quality check (default false)
+        initial_draft:
+          type: boolean
+          description: Initial draft (default false)
+        sms_update:
+          type: boolean
+          description: SMS update (default false)
+        full_text_copy_sources:
+          type: boolean
+          description: Full text copy sources (default false)
+        same_paper_from_another_writer:
+          type: boolean
+          description: Same paper from another writer (default false)
     OrderType:
       type: object
       properties:

@@ -91,6 +91,7 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 	order.FullTextCopySources = false
 	order.SamePaperFromAnotherWriter = false
 	order.Status = "pending_payment" // Initial status
+	order.NoOfSources = 0
 
 	if err := h.orderService.CreateOrder(&order); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order", "details": err.Error()})
