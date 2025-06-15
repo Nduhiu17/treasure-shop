@@ -64,19 +64,19 @@ func (s *AuthService) Register(user *models.User, userRoleService *userservices.
 	return nil
 }
 
-func (s *AuthService) Login(email, password string) (string, error) {
+func (s *AuthService) Login(email, password string) (string, *models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	var user models.User
 	err := s.userCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 	if err != nil {
-		return "", errors.New("invalid credentials")
+		return "", nil, errors.New("invalid credentials")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return "", errors.New("invalid credentials")
+		return "", nil, errors.New("invalid credentials")
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -86,20 +86,23 @@ func (s *AuthService) Login(email, password string) (string, error) {
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	claims["iat"] = time.Now().Unix()
 	claims["roles"] = []string{} // Initialize roles slice
+	claims["user"] = user
 	// Fetch user roles
 	userRoleService := userservices.NewUserRoleService(s.userCollection.Database())
 	roles, err := userRoleService.GetByUserID(user.ID)
 	if err != nil {
-		return "", errors.New("failed to fetch user roles")
+		return "", nil, errors.New("failed to fetch user roles")
 	}
+	var roleNames []string
 	for _, role := range roles {
 		roleService := userservices.NewRoleService(s.userCollection.Database())
 		roleObj, err := roleService.GetByID(role.RoleID)
 		if err != nil {
-			return "", errors.New("failed to fetch user roles")
+			return "", nil, errors.New("failed to fetch user roles")
 		}
-		claims["roles"] = append(claims["roles"].([]string), roleObj.Name)
+		roleNames = append(roleNames, roleObj.Name)
 	}
+	claims["roles"] = roleNames
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -108,8 +111,12 @@ func (s *AuthService) Login(email, password string) (string, error) {
 
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return tokenString, nil
+	// Remove password before returning user
+	user.Password = ""
+	user.Roles = roleNames
+
+	return tokenString, &user, nil
 }

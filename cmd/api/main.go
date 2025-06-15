@@ -68,10 +68,18 @@ func main() {
 	roleService := userservices.NewRoleService(db)
 	userRoleService := userservices.NewUserRoleService(db)
 
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
 	// Enable CORS for all origins and methods (customize as needed)
-	r.Use(cors.Default())
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	// Initialize Handlers (you'll need to pass in services and database client)
 	authHandler := ahandlers.NewAuthHandler(client, dbName, userRoleService, roleService)
