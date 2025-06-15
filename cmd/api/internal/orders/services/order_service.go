@@ -341,3 +341,20 @@ func PopulateOrderUrgencyNames(orders []models.Order, orderUrgencyService *Order
 	}
 	return orders
 }
+
+// Helper: populate OrderStyleName for orders
+func PopulateOrderStyleNames(orders []models.Order, orderStyleService *OrderStyleService) []models.Order {
+	for i, order := range orders {
+		if order.OrderStyleID.IsZero() {
+			orders[i].OrderStyleName = ""
+			continue
+		}
+		style, err := orderStyleService.GetByID(order.OrderStyleID)
+		if err == nil && style != nil {
+			orders[i].OrderStyleName = style.Name
+		} else {
+			orders[i].OrderStyleName = ""
+		}
+	}
+	return orders
+}

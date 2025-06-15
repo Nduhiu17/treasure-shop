@@ -716,6 +716,12 @@ components:
         order_urgency_name:
           type: string
           description: Name of the order urgency (response only)
+        order_style_id:
+          type: string
+          description: Foreign key to OrderStyle (required)
+        order_style_name:
+          type: string
+          description: Name of the order style (response only)
         title:
           type: string
         description:
@@ -786,6 +792,15 @@ components:
           type: string
           format: date-time
     OrderUrgency:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    OrderStyle:
       type: object
       properties:
         id:

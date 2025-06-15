@@ -76,6 +76,11 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "OrderUrgencyID is required"})
 		return
 	}
+	// Ensure OrderStyleID is provided and valid
+	if order.OrderStyleID.IsZero() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OrderStyleID is required"})
+		return
+	}
 	order.Status = "pending_payment" // Initial status
 
 	if err := h.orderService.CreateOrder(&order); err != nil {
