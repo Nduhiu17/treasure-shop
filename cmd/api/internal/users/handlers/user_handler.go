@@ -51,11 +51,17 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fmt.Printf("[DEBUG] Incoming order payload: %+v\n", order)
 	order.UserID = userOID
 	order.WriterID = nil // Set WriterID to nil so it is omitted or null in JSON if not assigned
 	// Ensure OrderTypeID is provided and valid
 	if order.OrderTypeID.IsZero() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "OrderTypeID is required"})
+		return
+	}
+	// Ensure OrderUrgencyID is provided and valid
+	if order.OrderUrgencyID.IsZero() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "OrderUrgencyID is required"})
 		return
 	}
 	order.Status = "pending_payment" // Initial status

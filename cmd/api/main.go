@@ -69,6 +69,7 @@ func main() {
 	userRoleService := userservices.NewUserRoleService(db)
 	orderLevelService := services.NewOrderLevelService(db)
 	orderPagesService := services.NewOrderPagesService(db)
+	orderUrgencyService := services.NewOrderUrgencyService(db)
 
 	r := gin.New()
 	r.Use(gin.Logger())
@@ -90,6 +91,7 @@ func main() {
 	orderHandler := ohandlers.NewOrderHandler(client, dbName)
 	orderLevelHandler := ohandlers.NewOrderLevelHandler(orderLevelService)
 	orderPagesHandler := ohandlers.NewOrderPagesHandler(orderPagesService)
+	orderUrgencyHandler := ohandlers.NewOrderUrgencyHandler(orderUrgencyService)
 
 	// OrderType Service/Handler
 	orderTypeCol := client.Database(dbName).Collection("order_types")
@@ -114,6 +116,10 @@ func main() {
 	// Public OrderPages endpoints
 	r.GET("/api/order-pages", orderPagesHandler.List)
 	r.GET("/api/order-pages/:id", orderPagesHandler.GetByID)
+
+	// Public OrderUrgency endpoints
+	r.GET("/api/order-urgency", orderUrgencyHandler.List)
+	r.GET("/api/order-urgency/:id", orderUrgencyHandler.GetByID)
 
 	// Protected Routes
 	protected := r.Group("/api")
@@ -158,6 +164,11 @@ func main() {
 			admin.POST("/order-pages", orderPagesHandler.Create)
 			admin.PUT("/order-pages/:id", orderPagesHandler.Update)
 			admin.DELETE("/order-pages/:id", orderPagesHandler.Delete)
+
+			// OrderUrgency CRUD (admin only)
+			admin.POST("/order-urgency", orderUrgencyHandler.Create)
+			admin.PUT("/order-urgency/:id", orderUrgencyHandler.Update)
+			admin.DELETE("/order-urgency/:id", orderUrgencyHandler.Delete)
 
 			// List users by role (admin/super_admin only)
 			admin.GET("/users", userHandler.ListUsersByRole)

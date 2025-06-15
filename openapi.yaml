@@ -580,6 +580,81 @@ paths:
       responses:
         '200':
           description: Order pages deleted
+  /api/order-urgency:
+    get:
+      summary: List all order urgencies
+      responses:
+        '200':
+          description: List of order urgencies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderUrgency'
+  /api/order-urgency/{id}:
+    get:
+      summary: Get order urgency by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order urgency details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderUrgency'
+  /api/admin/order-urgency:
+    post:
+      summary: Create order urgency (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderUrgency'
+      responses:
+        '201':
+          description: Order urgency created
+  /api/admin/order-urgency/{id}:
+    put:
+      summary: Update order urgency (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderUrgency'
+      responses:
+        '200':
+          description: Order urgency updated
+    delete:
+      summary: Delete order urgency (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order urgency deleted
 components:
   securitySchemes:
     bearerAuth:
@@ -635,6 +710,12 @@ components:
         order_pages_name:
           type: string
           description: Name of the order pages (response only)
+        order_urgency_id:
+          type: string
+          description: Foreign key to OrderUrgency (required)
+        order_urgency_name:
+          type: string
+          description: Name of the order urgency (response only)
         title:
           type: string
         description:
@@ -701,3 +782,12 @@ components:
         updated_at:
           type: string
           format: date-time
+    OrderUrgency:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string

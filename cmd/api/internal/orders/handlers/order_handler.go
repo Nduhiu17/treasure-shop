@@ -68,6 +68,9 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 	// Populate OrderPagesName
 	orderPagesService := services.NewOrderPagesService(h.db)
 	orders = services.PopulateOrderPagesNames(orders, orderPagesService)
+	// Populate OrderUrgencyName
+	orderUrgencyService := services.NewOrderUrgencyService(h.db)
+	orders = services.PopulateOrderUrgencyNames(orders, orderUrgencyService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,
@@ -82,6 +85,8 @@ func (h *OrderHandler) ListSubmittedOrders(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list submitted orders"})
 		return
 	}
+	orderUrgencyService := services.NewOrderUrgencyService(h.db)
+	orders = services.PopulateOrderUrgencyNames(orders, orderUrgencyService)
 	c.JSON(http.StatusOK, orders)
 }
 
@@ -295,6 +300,9 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 	// Populate OrderPagesName
 	orderPagesService := services.NewOrderPagesService(h.db)
 	orders = services.PopulateOrderPagesNames(orders, orderPagesService)
+	// Populate OrderUrgencyName
+	orderUrgencyService := services.NewOrderUrgencyService(h.db)
+	orders = services.PopulateOrderUrgencyNames(orders, orderUrgencyService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,

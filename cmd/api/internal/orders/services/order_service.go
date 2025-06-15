@@ -324,3 +324,20 @@ func PopulateOrderPagesNames(orders []models.Order, orderPagesService *OrderPage
 	}
 	return orders
 }
+
+// Helper: populate OrderUrgencyName for orders
+func PopulateOrderUrgencyNames(orders []models.Order, orderUrgencyService *OrderUrgencyService) []models.Order {
+	for i, order := range orders {
+		if order.OrderUrgencyID.IsZero() {
+			orders[i].OrderUrgencyName = ""
+			continue
+		}
+		urgency, err := orderUrgencyService.GetByID(order.OrderUrgencyID)
+		if err == nil && urgency != nil {
+			orders[i].OrderUrgencyName = urgency.Name
+		} else {
+			orders[i].OrderUrgencyName = ""
+		}
+	}
+	return orders
+}

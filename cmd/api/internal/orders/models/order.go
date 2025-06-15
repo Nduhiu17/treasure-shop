@@ -24,4 +24,6 @@ type Order struct {
 	LevelName             string              `bson:"-" json:"level_name,omitempty"`
 	OrderPagesID          primitive.ObjectID  `bson:"order_pages_id" json:"order_pages_id" binding:"required"`
 	OrderPagesName        string              `bson:"-" json:"order_pages_name,omitempty"`
+	OrderUrgencyID        primitive.ObjectID  `bson:"order_urgency_id" json:"order_urgency_id" binding:"required"`
+	OrderUrgencyName      string              `bson:"-" json:"order_urgency_name,omitempty"`
 }
