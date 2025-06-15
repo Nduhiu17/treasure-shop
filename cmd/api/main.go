@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	ahandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/auth/handlers"
@@ -68,6 +69,9 @@ func main() {
 	userRoleService := userservices.NewUserRoleService(db)
 
 	r := gin.Default()
+
+	// Enable CORS for all origins and methods (customize as needed)
+	r.Use(cors.Default())
 
 	// Initialize Handlers (you'll need to pass in services and database client)
 	authHandler := ahandlers.NewAuthHandler(client, dbName, userRoleService, roleService)
