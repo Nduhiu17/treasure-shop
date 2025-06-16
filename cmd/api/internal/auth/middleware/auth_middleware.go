@@ -81,6 +81,16 @@ func AuthMiddleware() gin.HandlerFunc {
 				}
 			}
 
+			// Set user_number in context if available in claims or user struct
+			if user, exists := c.Get("user"); exists {
+				if u, ok := user.(models.User); ok {
+					c.Set("user_number", u.UserNumber)
+				}
+			}
+			if userNumber, ok := claims["user_number"].(string); ok {
+				c.Set("user_number", userNumber)
+			}
+
 			c.Next()
 		} else {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
@@ -110,7 +120,7 @@ func AdminRoleMiddleware() gin.HandlerFunc {
 func WriterRoleMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		roles, ok := c.Get("roles")
-		fmt.Println("Checking writer role middleware",ok, roles)
+		fmt.Println("Checking writer role middleware", ok, roles)
 
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})

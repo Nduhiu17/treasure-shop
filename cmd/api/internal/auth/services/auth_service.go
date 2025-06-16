@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -40,6 +42,9 @@ func (s *AuthService) Register(user *models.User, userRoleService *userservices.
 	}
 	user.Password = string(hashedPassword)
 
+	// Generate random 6-digit user_number
+	user.UserNumber = generateRandomSixDigitNumber()
+
 	res, err := s.userCollection.InsertOne(ctx, user)
 	if err != nil {
 		return err
@@ -71,12 +76,12 @@ func (s *AuthService) Login(email, password string) (string, *models.User, error
 	var user models.User
 	err := s.userCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
 	if err != nil {
-		return "", nil, errors.New("invalid credentials")
+		return "", nil, errors.New("invalid email address")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return "", nil, errors.New("invalid credentials")
+		return "", nil, errors.New("invalid password")
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -119,4 +124,10 @@ func (s *AuthService) Login(email, password string) (string, *models.User, error
 	user.Roles = roleNames
 
 	return tokenString, &user, nil
+}
+
+// generateRandomSixDigitNumber returns a random 6-digit string
+func generateRandomSixDigitNumber() string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf("%06d", rand.Intn(1000000))
 }

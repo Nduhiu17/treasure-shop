@@ -3,14 +3,15 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type User struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Email     string             `bson:"email" json:"email" binding:"required"`
-	Username  string             `bson:"username" json:"username" binding:"required"`
-	FirstName string             `bson:"first_name" json:"first_name" binding:"required"`
-	LastName  string             `bson:"last_name" json:"last_name" binding:"required"`
-	Password  string             `bson:"password" json:"password" binding:"required"`
-	Tier      string             `bson:"tier,omitempty" json:"tier,omitempty"`
-	Roles     []string           `bson:"-" json:"roles,omitempty"`
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Email      string             `bson:"email" json:"email" binding:"required"`
+	Username   string             `bson:"username" json:"username" binding:"required"`
+	FirstName  string             `bson:"first_name" json:"first_name" binding:"required"`
+	LastName   string             `bson:"last_name" json:"last_name" binding:"required"`
+	Password   string             `bson:"password" json:"password" binding:"required"`
+	Tier       string             `bson:"tier,omitempty" json:"tier,omitempty"`
+	Roles      []string           `bson:"-" json:"roles,omitempty"`
+	UserNumber string             `bson:"user_number" json:"user_number" binding:"required"`
 }
 
 // Role struct for roles collection
