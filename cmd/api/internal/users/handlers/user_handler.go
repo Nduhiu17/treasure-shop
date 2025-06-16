@@ -114,13 +114,38 @@ func (h *UserHandler) GetUserOrders(c *gin.Context) {
 		return
 	}
 
-	orders, err := h.orderService.GetOrdersByUserID(userOID)
+	// Pagination params
+	page := 1
+	pageSize := 10
+	if p := c.Query("page"); p != "" {
+		fmt.Sscanf(p, "%d", &page)
+	}
+	if ps := c.Query("page_size"); ps != "" {
+		fmt.Sscanf(ps, "%d", &pageSize)
+	}
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+	// Status filter
+	var statusPtr *string
+	if status := c.Query("status"); status != "" {
+		statusPtr = &status
+	}
+	// Use GetOrdersFiltered for filtering and pagination
+	orders, total, err := h.orderService.GetOrdersFiltered(&userOID, nil, statusPtr, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user orders"})
 		return
 	}
-
-	c.JSON(http.StatusOK, orders)
+	c.JSON(http.StatusOK, gin.H{
+		"orders":    orders,
+		"total":     total,
+		"page":      page,
+		"page_size": pageSize,
+	})
 }
 
 func (h *UserHandler) ListUsersByRole(c *gin.Context) {
