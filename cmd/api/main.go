@@ -106,6 +106,7 @@ func main() {
 	// Public Routes
 	r.POST("/auth/register", authHandler.Register)
 	r.POST("/auth/login", authHandler.Login)
+	r.POST("/auth/logout", ahandlers.LogoutHandler)
 
 	// Serve OpenAPI YAML directly
 	r.StaticFile("/openapi.yaml", "./openapi.yaml")
@@ -138,13 +139,13 @@ func main() {
 	// Unpaginated OrderType endpoint
 	r.GET("/api/order-types/all", orderTypeService.ListAll)
 
-	// S3 file upload endpoint
-	r.POST("/api/upload", ohandlers.S3UploadHandler)
-
 	// Protected Routes
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
+		// S3 file upload endpoint (must be authenticated)
+		protected.POST("/upload", ohandlers.S3UploadHandler)
+
 		// User Routes
 		protected.POST("/orders", userHandler.CreateOrder)
 		protected.GET("/orders/me", userHandler.GetUserOrders)

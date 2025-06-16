@@ -88,11 +88,15 @@ func (s *AuthService) Login(email, password string) (string, *models.User, error
 	claims := token.Claims.(jwt.MapClaims)
 	claims["sub"] = user.ID.Hex()
 	claims["email"] = user.Email
-	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-	claims["iat"] = time.Now().Unix()
 	claims["roles"] = []string{} // Initialize roles slice
 	claims["user"] = user
+	claims["user_number"] = user.UserNumber
+	fmt.Println("JWT user_number:", user.UserNumber)
+
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+	claims["iat"] = time.Now().Unix()
 	// Fetch user roles
+	fmt.Println("user ID for roles:", user.UserNumber)
 	userRoleService := userservices.NewUserRoleService(s.userCollection.Database())
 	roles, err := userRoleService.GetByUserID(user.ID)
 	if err != nil {

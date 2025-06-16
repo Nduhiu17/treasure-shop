@@ -82,13 +82,18 @@ func AuthMiddleware() gin.HandlerFunc {
 			}
 
 			// Set user_number in context if available in claims or user struct
-			if user, exists := c.Get("user"); exists {
-				if u, ok := user.(models.User); ok {
-					c.Set("user_number", u.UserNumber)
-				}
-			}
 			if userNumber, ok := claims["user_number"].(string); ok {
 				c.Set("user_number", userNumber)
+			} else if user, exists := c.Get("user"); exists {
+				// Try to extract user_number from user struct (map or struct)
+				switch u := user.(type) {
+				case models.User:
+					c.Set("user_number", u.UserNumber)
+				case map[string]interface{}:
+					if un, ok := u["user_number"].(string); ok {
+						c.Set("user_number", un)
+					}
+				}
 			}
 
 			c.Next()

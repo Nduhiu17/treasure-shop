@@ -16,8 +16,33 @@ import (
 
 // S3UploadHandler handles file uploads to AWS S3
 func S3UploadHandler(c *gin.Context) {
-	userNumber, exists := c.Get("user_number")
-	if !exists || userNumber == "" {
+	fmt.Println("S3UploadHandler called", "user_number:", c.GetString("user_number"))
+	userNumber := ""
+	if val, exists := c.Get("user_number"); exists {
+		switch v := val.(type) {
+		case string:
+			userNumber = v
+		case fmt.Stringer:
+			userNumber = v.String()
+		case interface{}:
+			userNumber = fmt.Sprintf("%v", v)
+		}
+	}
+	if userNumber == "" {
+		// Try to get from user struct in context (for backward compatibility)
+		if userVal, ok := c.Get("user"); ok {
+			switch user := userVal.(type) {
+			case map[string]interface{}:
+				if un, ok := user["user_number"]; ok {
+					userNumber = fmt.Sprintf("%v", un)
+				}
+			case struct{ UserNumber string }:
+				userNumber = user.UserNumber
+			}
+		}
+	}
+	fmt.Println("DEBUG S3UploadHandler user_number (final):", userNumber)
+	if userNumber == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_number is required in context (check authentication)"})
 		return
 	}
