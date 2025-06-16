@@ -133,6 +133,10 @@ func main() {
 	r.GET("/api/order-languages", orderLanguageHandler.List)
 	r.GET("/api/order-languages/:id", orderLanguageHandler.GetByID)
 
+	// Public OrderType endpoints
+    r.GET("/api/order-types", orderTypeService.List)
+
+
 	// Protected Routes
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
@@ -162,7 +166,6 @@ func main() {
 
 			// OrderType CRUD (admin only)
 			admin.POST("/order-types", orderTypeService.Create)
-			admin.GET("/order-types", orderTypeService.List)
 			admin.GET("/order-types/:id", orderTypeService.GetByID)
 			admin.PUT("/order-types/:id", orderTypeService.Update)
 			admin.DELETE("/order-types/:id", orderTypeService.Delete)
