@@ -140,6 +140,20 @@ func (h *UserHandler) GetUserOrders(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user orders"})
 		return
 	}
+	// Enrich order details with related names
+	orderLevelService := services.NewOrderLevelService(h.orderService.GetDB())
+	orders = services.PopulateOrderLevelNames(orders, orderLevelService)
+	orderPagesService := services.NewOrderPagesService(h.orderService.GetDB())
+	orders = services.PopulateOrderPagesNames(orders, orderPagesService)
+	orderUrgencyService := services.NewOrderUrgencyService(h.orderService.GetDB())
+	orders = services.PopulateOrderUrgencyNames(orders, orderUrgencyService)
+	orderStyleService := services.NewOrderStyleService(h.orderService.GetDB())
+	orders = services.PopulateOrderStyleNames(orders, orderStyleService)
+	orderLanguageService := services.NewOrderLanguageService(h.orderService.GetDB())
+	orders = services.PopulateOrderLanguageNames(orders, orderLanguageService)
+	userService := userservices.NewUserService(h.orderService.GetDB())
+	orders = services.PopulateWriterNames(orders, userService)
+
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,

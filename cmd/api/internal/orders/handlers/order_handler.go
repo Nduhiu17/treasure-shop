@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
+	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -77,6 +78,9 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 	// Populate OrderLanguageName
 	orderLanguageService := services.NewOrderLanguageService(h.db)
 	orders = services.PopulateOrderLanguageNames(orders, orderLanguageService)
+	// Populate WriterName
+	userService := userservices.NewUserService(h.db)
+	orders = services.PopulateWriterNames(orders, userService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,
@@ -99,6 +103,9 @@ func (h *OrderHandler) ListSubmittedOrders(c *gin.Context) {
 	// Populate OrderLanguageName
 	orderLanguageService := services.NewOrderLanguageService(h.db)
 	orders = services.PopulateOrderLanguageNames(orders, orderLanguageService)
+	// Populate WriterName
+	userService := userservices.NewUserService(h.db)
+	orders = services.PopulateWriterNames(orders, userService)
 	c.JSON(http.StatusOK, orders)
 }
 
@@ -321,6 +328,9 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 	// Populate OrderLanguageName
 	orderLanguageService := services.NewOrderLanguageService(h.db)
 	orders = services.PopulateOrderLanguageNames(orders, orderLanguageService)
+	// Populate WriterName
+	userService := userservices.NewUserService(h.db)
+	orders = services.PopulateWriterNames(orders, userService)
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,

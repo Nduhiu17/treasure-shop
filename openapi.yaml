@@ -732,6 +732,10 @@ components:
           type: string
         writer_id:
           type: string
+          description: Writer's ObjectID (nullable, only present if assigned)
+        writer_name:
+          type: string
+          description: Writer's full name (response only, present if assigned)
         submission_date:
           type: string
           format: date-time

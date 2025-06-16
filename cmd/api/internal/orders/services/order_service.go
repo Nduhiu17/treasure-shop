@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
+	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -291,6 +292,10 @@ func (s *OrderService) WriterAssignmentResponse(orderID, writerID primitive.Obje
 	}
 }
 
+func (s *OrderService) GetDB() *mongo.Database {
+	return s.orderCollection.Database()
+}
+
 // Helper: populate LevelName for orders
 func PopulateOrderLevelNames(orders []models.Order, orderLevelService *OrderLevelService) []models.Order {
 	for i, order := range orders {
@@ -371,6 +376,23 @@ func PopulateOrderLanguageNames(orders []models.Order, orderLanguageService *Ord
 			orders[i].OrderLanguageName = lang.Name
 		} else {
 			orders[i].OrderLanguageName = ""
+		}
+	}
+	return orders
+}
+
+// PopulateWriterNames populates WriterName for each order if WriterID is set
+func PopulateWriterNames(orders []models.Order, userService *userservices.UserService) []models.Order {
+	for i, order := range orders {
+		if order.WriterID != nil && !order.WriterID.IsZero() {
+			user, err := userService.GetUserByID(*order.WriterID)
+			if err == nil && user != nil {
+				if user.FirstName != "" || user.LastName != "" {
+					orders[i].WriterName = user.FirstName + " " + user.LastName
+				} else {
+					orders[i].WriterName = user.Username
+				}
+			}
 		}
 	}
 	return orders
