@@ -134,8 +134,9 @@ func main() {
 	r.GET("/api/order-languages/:id", orderLanguageHandler.GetByID)
 
 	// Public OrderType endpoints
-    r.GET("/api/order-types", orderTypeService.List)
-
+	r.GET("/api/order-types", orderTypeService.List)
+	// Unpaginated OrderType endpoint
+	r.GET("/api/order-types/all", orderTypeService.ListAll)
 
 	// Protected Routes
 	protected := r.Group("/api")

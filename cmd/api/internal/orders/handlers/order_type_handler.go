@@ -103,6 +103,15 @@ func (h *OrderTypeHandler) List(c *gin.Context) {
 	})
 }
 
+func (h *OrderTypeHandler) ListAll(c *gin.Context) {
+	orderTypes, err := h.Service.List(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"order_types": orderTypes})
+}
+
 func (h *OrderTypeHandler) Update(c *gin.Context) {
 	id, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err != nil {
