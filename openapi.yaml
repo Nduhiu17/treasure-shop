@@ -754,33 +754,20 @@ components:
           type: integer
           description: Number of sources for the order (default 0)
         preferred_writer_number:
-          type: integer
+          type: string
           nullable: true
           description: Preferred writer number (optional)
-        top_writer:
-          type: boolean
-          description: Top writer (default false)
-        plagarism_report:
-          type: boolean
-          description: Plagarism report (default false)
-        one_page_summary:
-          type: boolean
-          description: One page summary (default false)
-        extra_quality_check:
-          type: boolean
-          description: Extra quality check (default false)
-        initial_draft:
-          type: boolean
-          description: Initial draft (default false)
-        sms_update:
-          type: boolean
-          description: SMS update (default false)
-        full_text_copy_sources:
-          type: boolean
-          description: Full text copy sources (default false)
-        same_paper_from_another_writer:
-          type: boolean
-          description: Same paper from another writer (default false)
+        original_order_file:
+          type: string
+          nullable: true
+          description: S3 key or URL of the original order file (optional)
+        apply_feedback_requests:
+          type: integer
+          description: Number of feedback requests applied
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
     OrderType:
       type: object
       properties:
