@@ -138,6 +138,9 @@ func main() {
 	// Unpaginated OrderType endpoint
 	r.GET("/api/order-types/all", orderTypeService.ListAll)
 
+	// S3 file upload endpoint
+	r.POST("/api/upload", ohandlers.S3UploadHandler)
+
 	// Protected Routes
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
