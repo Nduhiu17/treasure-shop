@@ -11,7 +11,7 @@ type User struct {
 	Password   string             `bson:"password" json:"password" binding:"required"`
 	Tier       string             `bson:"tier,omitempty" json:"tier,omitempty"`
 	Roles      []string           `bson:"-" json:"roles,omitempty"`
-	UserNumber string             `bson:"user_number" json:"user_number" binding:"required"`
+	UserNumber string             `bson:"user_number" json:"user_number"`
 }
 
 // Role struct for roles collection
