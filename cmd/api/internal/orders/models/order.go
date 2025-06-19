@@ -16,6 +16,7 @@ type Order struct {
 	Status                     string              `bson:"status" json:"status"` // pending_payment, awaiting_assignment, assigned, in_progress, submitted_for_review, approved, feedback, completed
 	WriterID                   *primitive.ObjectID `bson:"writer_id,omitempty" json:"writer_id"`
 	WriterName                 string              `bson:"-" json:"writer_name,omitempty"`
+	WriterUsername             string              `bson:"-" json:"writer_username,omitempty"`
 	SubmissionDate             *time.Time          `bson:"submission_date,omitempty" json:"submission_date,omitempty"`
 	Feedback                   string              `bson:"feedback,omitempty" json:"feedback,omitempty"`
 	CreatedAt                  time.Time           `bson:"created_at,omitempty" json:"created_at,omitempty"`

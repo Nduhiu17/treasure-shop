@@ -150,6 +150,9 @@ func main() {
 		protected.POST("/orders", userHandler.CreateOrder)
 		protected.GET("/orders/me", userHandler.GetUserOrders)
 
+		// Payment endpoint for orders (PayPal or Mastercard)
+		protected.POST("/orders/pay", ohandlers.PayForOrderHandler)
+
 		// Writer Routes (Admin protected)
 		writers := protected.Group("/writers")
 		writers.Use(middleware.AdminRoleMiddleware())

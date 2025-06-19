@@ -392,7 +392,14 @@ func PopulateWriterNames(orders []models.Order, userService *userservices.UserSe
 				} else {
 					orders[i].WriterName = user.Username
 				}
+				orders[i].WriterUsername = user.Username
+			} else {
+				orders[i].WriterName = ""
+				orders[i].WriterUsername = ""
 			}
+		} else {
+			orders[i].WriterName = ""
+			orders[i].WriterUsername = ""
 		}
 	}
 	return orders
