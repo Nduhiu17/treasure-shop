@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	orderservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/payments/services"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // PaymentRequest represents the expected payload for payment
@@ -27,6 +29,18 @@ func PayForOrderHandler(c *gin.Context) {
 	}
 
 	paymentService := services.NewPaymentService()
+	// Get DB from Gin context (set in main.go)
+	dbIface, exists := c.Get("db")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection not found in context"})
+		return
+	}
+	db, ok := dbIface.(*mongo.Database)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid database connection in context"})
+		return
+	}
+	orderService := orderservices.NewOrderService(db)
 
 	if req.Method == "paypal" {
 		amount, _ := req.PaymentInfo["amount"].(float64)
@@ -36,6 +50,11 @@ func PayForOrderHandler(c *gin.Context) {
 		orderID, err := paymentService.CreatePayPalOrder(amount, currency, returnURL, cancelURL)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create PayPal order", "details": err.Error()})
+			return
+		}
+		// Mark order as paid
+		if err := orderService.MarkOrderPaid(req.OrderID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Payment succeeded but failed to update order status", "details": err.Error()})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"paypal_order_id": orderID})
@@ -49,6 +68,11 @@ func PayForOrderHandler(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to capture PayPal order", "details": err.Error()})
 			return
 		}
+		// Mark order as paid
+		if err := orderService.MarkOrderPaid(req.OrderID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Payment succeeded but failed to update order status", "details": err.Error()})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"status": status})
 		return
 	}
@@ -60,6 +84,10 @@ func PayForOrderHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Payment failed", "details": err})
 		return
 	}
-
+	// Mark order as paid
+	if err := orderService.MarkOrderPaid(req.OrderID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Payment succeeded but failed to update order status", "details": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"message": "Payment successful"})
 }

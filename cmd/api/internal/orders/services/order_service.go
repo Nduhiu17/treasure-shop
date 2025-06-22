@@ -407,3 +407,15 @@ func PopulateWriterNames(orders []models.Order, userService *userservices.UserSe
 	}
 	return orders
 }
+
+// Helper to update order status to paid
+func (s *OrderService) MarkOrderPaid(orderID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	objID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		return err
+	}
+	_, err = s.orderCollection.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"status": "paid", "updated_at": time.Now()}})
+	return err
+}
