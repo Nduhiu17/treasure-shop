@@ -93,11 +93,12 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 	order.Status = "pending_payment" // Initial status
 	order.NoOfSources = 0
 
-	if err := h.orderService.CreateOrder(&order); err != nil {
+	insertedID, err := h.orderService.CreateOrder(&order)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order", "details": err.Error()})
 		return
 	}
-
+	order.ID = insertedID
 	c.JSON(http.StatusCreated, order)
 }
 

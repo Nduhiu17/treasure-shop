@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -337,4 +338,19 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 		"page":      page,
 		"page_size": pageSize,
 	})
+}
+
+func (h *OrderHandler) CreateOrder(c *gin.Context) {
+	var order models.Order
+	if err := c.ShouldBindJSON(&order); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	insertedID, err := h.service.CreateOrder(&order)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order", "details": err.Error()})
+		return
+	}
+	order.ID = insertedID
+	c.JSON(http.StatusCreated, order)
 }

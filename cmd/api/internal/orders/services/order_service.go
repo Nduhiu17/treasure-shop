@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
@@ -26,13 +25,21 @@ func NewOrderService(db *mongo.Database) *OrderService {
 	}
 }
 
-func (s *OrderService) CreateOrder(order *models.Order) error {
+func (s *OrderService) CreateOrder(order *models.Order) (primitive.ObjectID, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	order.ApplyFeedbackRequests = 0 // Default to zero on creation
-	fmt.Println("Creating order:", order)
-	_, err := s.orderCollection.InsertOne(ctx, order)
-	return err
+	order.CreatedAt = time.Now()
+	order.UpdatedAt = time.Now()
+	res, err := s.orderCollection.InsertOne(ctx, order)
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+	insertedID, ok := res.InsertedID.(primitive.ObjectID)
+	if ok {
+		order.ID = insertedID
+	}
+	return insertedID, nil
 }
 
 func (s *OrderService) GetAllOrders() ([]models.Order, error) {
