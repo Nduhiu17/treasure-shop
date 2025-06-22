@@ -668,7 +668,22 @@ paths:
               $ref: '#/components/schemas/PaymentRequest'
       responses:
         '200':
-          description: Payment successful
+          description: Payment successful or PayPal order/capture response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  paypal_order_id:
+                    type: string
+                  status:
+                    type: string
+                  error:
+                    type: string
+                  details:
+                    type: string
         '400':
           description: Bad request
         '500':
@@ -872,7 +887,7 @@ components:
           description: The order to pay for
         method:
           type: string
-          enum: [paypal, mastercard]
+          enum: [paypal, paypal_capture, mastercard]
           description: Payment method
         payment_info:
           type: object
