@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -82,8 +84,38 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 	// Populate WriterName
 	userService := userservices.NewUserService(h.db)
 	orders = services.PopulateWriterNames(orders, userService)
+
+	// Fetch submissions for each order
+	orderIDs := make([]primitive.ObjectID, len(orders))
+	for i, o := range orders {
+		orderIDs[i] = o.ID
+	}
+	submissionsMap := make(map[primitive.ObjectID][]models.OrderSubmission)
+	orderSubmissionColl := h.db.Collection("order_submissions")
+	for _, oid := range orderIDs {
+		cursor, err := orderSubmissionColl.Find(c, bson.M{"order_id": oid})
+		if err == nil {
+			var subs []models.OrderSubmission
+			_ = cursor.All(c, &subs)
+			submissionsMap[oid] = subs
+		} else {
+			submissionsMap[oid] = []models.OrderSubmission{}
+		}
+	}
+	// Attach writer_submissions inside the order object, always present as an array
+	var ordersWithSubs []gin.H
+	for _, o := range orders {
+		subs := submissionsMap[o.ID]
+		orderMap := gin.H{}
+		// Copy all fields from o to orderMap
+		orderBytes, _ := json.Marshal(o)
+		_ = json.Unmarshal(orderBytes, &orderMap)
+		orderMap["writer_submissions"] = subs
+		ordersWithSubs = append(ordersWithSubs, orderMap)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"orders":    orders,
+		"orders":    ordersWithSubs,
 		"total":     total,
 		"page":      page,
 		"page_size": pageSize,
@@ -148,7 +180,8 @@ func (h *OrderHandler) SubmitOrder(c *gin.Context) {
 	}
 
 	var submitRequest struct {
-		Content string `json:"content"`
+		SubmissionFile        string `json:"active_submission_file" binding:"required"`
+		SubmissionDescription string `json:"active_submission_writer_note" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&submitRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -166,7 +199,7 @@ func (h *OrderHandler) SubmitOrder(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.SubmitOrder(orderOID, writerOID, submitRequest.Content); err != nil {
+	if err := h.service.SubmitOrder(orderOID, writerOID, submitRequest.SubmissionFile, submitRequest.SubmissionDescription); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to submit order"})
 		return
 	}

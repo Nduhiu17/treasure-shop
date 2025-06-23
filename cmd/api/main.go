@@ -217,7 +217,7 @@ func main() {
 		writer := protected.Group("/writer")
 		writer.Use(middleware.WriterRoleMiddleware())
 		{
-			writer.POST("/orders/:id/submit", orderHandler.SubmitOrder)
+			writer.PUT("/orders/:id/submit", orderHandler.SubmitOrder)
 			writer.PUT("/orders/:id/assignment-response", orderHandler.WriterAcceptAssignment)
 			writer.GET("/orders/:writer_id", orderHandler.GetOrdersByWriter)
 

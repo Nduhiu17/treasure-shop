@@ -45,4 +45,5 @@ type Order struct {
 	NoOfSources                int                 `bson:"no_of_sources" json:"no_of_sources"`
 	PreferredWriterNumber      *string             `bson:"preferred_writer_number,omitempty" json:"preferred_writer_number,omitempty"`
 	OriginalOrderFile          *string             `bson:"original_order_file,omitempty" json:"original_order_file,omitempty"`
+	SubmissionTrials           int                 `bson:"submission_trials" json:"submission_trials"`
 }

@@ -201,7 +201,7 @@ func (s *OrderService) AssignOrder(orderID, writerID primitive.ObjectID) error {
 	return err
 }
 
-func (s *OrderService) SubmitOrder(orderID primitive.ObjectID, writerID primitive.ObjectID, content string) error {
+func (s *OrderService) SubmitOrder(orderID primitive.ObjectID, writerID primitive.ObjectID, submissionFile, submissionDescription string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -211,21 +211,39 @@ func (s *OrderService) SubmitOrder(orderID primitive.ObjectID, writerID primitiv
 		return errors.New("order not found or not assigned to this writer")
 	}
 
-	_, err := s.orderCollection.UpdateOne(
-		ctx,
-		bson.M{"_id": orderID},
-		bson.M{"$set": bson.M{"status": "submitted_for_review", "content": content, "submission_date": time.Now()}},
-	)
+	// Get current submission_trials
+	var order models.Order
+	err := s.orderCollection.FindOne(ctx, bson.M{"_id": orderID}).Decode(&order)
 	if err != nil {
-		return err
+		return errors.New("failed to retrieve order for submission trials")
+	}
+	trial := order.SubmissionTrials + 1
+
+	// Create new order_submissions document
+	submission := models.OrderSubmission{
+		ID:              primitive.NewObjectID(),
+		OrderID:         orderID,
+		SubmissionDate:  time.Now(),
+		Description:     submissionDescription,
+		SubmissionFile:  submissionFile,
+		SubmissionTrial: trial,
+	}
+	_, err = s.orderSubmissionCollection().InsertOne(ctx, submission)
+	if err != nil {
+		return errors.New("failed to create order submission record")
 	}
 
-	// In a real application, you would likely create a 'Review' record here as well.
-	// This could include the content submitted by the writer, the order ID, and any other relevant details.
+	// Update order status and submission_trials
+	_, err = s.orderCollection.UpdateOne(
+		ctx,
+		bson.M{"_id": orderID},
+		bson.M{"$set": bson.M{"status": "submitted_for_review", "submission_date": time.Now(), "submission_trials": trial}},
+	)
+	return err
+}
 
-	// For this basic example, we'll just update the order status.
-
-	return nil
+func (s *OrderService) orderSubmissionCollection() *mongo.Collection {
+	return s.orderCollection.Database().Collection("order_submissions")
 }
 
 func (s *OrderService) ApproveOrder(orderID, userID primitive.ObjectID) error {
