@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -155,8 +157,26 @@ func (h *UserHandler) GetUserOrders(c *gin.Context) {
 	userService := userservices.NewUserService(h.orderService.GetDB())
 	orders = services.PopulateWriterNames(orders, userService)
 
+	// Add writer_submissions to each order
+	orderSubmissionColl := h.orderService.GetDB().Collection("order_submissions")
+	var ordersWithSubs []gin.H
+	for _, o := range orders {
+		cursor, err := orderSubmissionColl.Find(c, bson.M{"order_id": o.ID})
+		var subs []models.OrderSubmission
+		if err == nil {
+			_ = cursor.All(c, &subs)
+		} else {
+			subs = []models.OrderSubmission{}
+		}
+		orderMap := gin.H{}
+		orderBytes, _ := json.Marshal(o)
+		_ = json.Unmarshal(orderBytes, &orderMap)
+		orderMap["writer_submissions"] = subs
+		ordersWithSubs = append(ordersWithSubs, orderMap)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"orders":    orders,
+		"orders":    ordersWithSubs,
 		"total":     total,
 		"page":      page,
 		"page_size": pageSize,
