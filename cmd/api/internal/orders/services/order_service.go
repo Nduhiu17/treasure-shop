@@ -423,6 +423,25 @@ func (s *OrderService) MarkOrderPaid(orderID string) error {
 	if err != nil {
 		return err
 	}
+	// Update status to paid
 	_, err = s.orderCollection.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"status": "paid", "updated_at": time.Now()}})
-	return err
+	if err != nil {
+		return err
+	}
+	// Fetch the order to check for preferred writer number
+	var order models.Order
+	err = s.orderCollection.FindOne(ctx, bson.M{"_id": objID}).Decode(&order)
+	if err != nil {
+		return nil // Order is paid, but can't assign writer
+	}
+	if order.PreferredWriterNumber != nil && *order.PreferredWriterNumber != "" {
+		// Find user with user_number == preferred_writer_number
+		var writerUser struct{ ID primitive.ObjectID }
+		err := s.userCollection.FindOne(ctx, bson.M{"user_number": *order.PreferredWriterNumber}).Decode(&writerUser)
+		if err == nil {
+			// Assign order to this writer
+			_, _ = s.orderCollection.UpdateOne(ctx, bson.M{"_id": objID}, bson.M{"$set": bson.M{"writer_id": writerUser.ID, "status": "awaiting_asign_acceptance", "assignment_date": time.Now()}})
+		}
+	}
+	return nil
 }
