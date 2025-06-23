@@ -162,6 +162,7 @@ func (s *PaymentService) CreatePayPalOrder(amount float64, currency, returnURL, 
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("Creating PayPal order with request:", string(jsonOrderRequest))
 	req, err := http.NewRequest("POST", paypalBaseURL+"/v2/checkout/orders", bytes.NewBuffer(jsonOrderRequest))
 	if err != nil {
 		return "", err

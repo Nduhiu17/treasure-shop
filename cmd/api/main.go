@@ -86,6 +86,12 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// Make DB available in Gin context for all requests
+	r.Use(func(c *gin.Context) {
+		c.Set("db", db)
+		c.Next()
+	})
+
 	// Initialize Handlers (you'll need to pass in services and database client)
 	authHandler := ahandlers.NewAuthHandler(client, dbName, userRoleService, roleService)
 	userHandler := uhandlers.NewUserHandler(client, dbName)
