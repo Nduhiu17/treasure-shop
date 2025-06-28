@@ -45,22 +45,23 @@ func registerRoleRoutes(r *gin.Engine, db *mongo.Database) {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found (this is OK in production, using environment variables)")
 	}
+
+	log.Println("Loaded environment variables, starting app initialization...")
 
 	mongoURI := os.Getenv("MONGODB_URI")
 	if mongoURI == "" {
-		log.Fatal("MONGODB_URI environment variable not set")
+		log.Panicln("MONGODB_URI environment variable not set")
 	}
 	dbName := os.Getenv("DB_NAME")
 	if dbName == "" {
-		log.Fatal("DB_NAME environment variable not set")
+		log.Println("DB_NAME environment variable not set")
 	}
 	client, err := database.ConnectMongoDB(mongoURI)
 	if err != nil {
-		log.Fatalf("Error connecting to MongoDB: %v", err)
+		log.Printf("Error connecting to MongoDB: %v", err)
 	}
 	defer database.DisconnectMongoDB(client)
 
@@ -242,6 +243,6 @@ func main() {
 
 	log.Printf("Server started on port %s", port)
 	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Error starting server: %v", err)
+		log.Printf("Error starting server: %v", err)
 	}
 }
