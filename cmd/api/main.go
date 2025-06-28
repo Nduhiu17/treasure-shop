@@ -241,6 +241,11 @@ func main() {
 	// Register role and user_role admin routes
 	registerRoleRoutes(r, client.Database(dbName))
 
+	// Health/readiness endpoint for Kubernetes
+	r.GET("/ready", func(c *gin.Context) {
+		c.String(200, "ok")
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
