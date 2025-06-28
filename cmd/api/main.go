@@ -246,6 +246,11 @@ func main() {
 		c.String(200, "ok")
 	})
 
+	// Liveness endpoint for Kubernetes
+	r.GET("/health", func(c *gin.Context) {
+		c.String(200, "healthy")
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
