@@ -62,8 +62,14 @@ func main() {
 	client, err := database.ConnectMongoDB(mongoURI)
 	if err != nil {
 		log.Printf("Error connecting to MongoDB: %v", err)
+		// Do not attempt to disconnect or use the client if connection failed
+		return
 	}
-	defer database.DisconnectMongoDB(client)
+	defer func() {
+		if client != nil {
+			database.DisconnectMongoDB(client)
+		}
+	}()
 
 	db := client.Database(dbName)
 	roleService := userservices.NewRoleService(db)
