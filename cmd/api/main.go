@@ -53,7 +53,7 @@ func main() {
 
 	mongoURI := os.Getenv("MONGODB_URI")
 	if mongoURI == "" {
-		log.Panicln("MONGODB_URI environment variable not set")
+		log.Println("MONGODB_URI environment variable not set")
 	}
 	dbName := os.Getenv("DB_NAME")
 	if dbName == "" {
