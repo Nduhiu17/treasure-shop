@@ -26,6 +26,7 @@ WORKDIR /root/
 # Copy the compiled Go application from the builder stage
 COPY --from=builder /app/main .
 
+COPY openapi.yaml .
 # Expose the port your Go API listens on (e.g., 8080)
 EXPOSE 8080
 
