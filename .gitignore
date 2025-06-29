@@ -2,3 +2,7 @@
 Usage.md
 main
 .env
+codebase-api-ingres.yaml
+example.env
+encrypt.yaml
+k8s-deployment.yaml

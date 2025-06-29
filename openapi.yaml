@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
-  title: Treasure Shop API
+  title: Academic Codebase API
   version: 1.0.0
   description: API documentation for the Treasure Shop backend
 servers:
-  - url: http://localhost:8080
+  - url: https://api.academiccodebase.com
 paths:
   /auth/register:
     post:

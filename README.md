@@ -2,6 +2,66 @@
 
 A robust backend API for the Treasure Shop platform, built with Go, Gin, and MongoDB. This project supports multi-role user management, order workflows, role-based access control, and is ready for frontend integration.
 
+# Deployment Guide: Google Kubernetes Engine (GKE)
+
+## 1. Prerequisites
+- Google Cloud account and project
+- [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed and authenticated
+- Docker installed
+- Kubernetes CLI (`kubectl`) installed
+
+## 2. Build and Push Docker Image
+
+```
+gcloud auth configure-docker
+docker build -t gcr.io/<YOUR_PROJECT_ID>/treasure-shop:latest .
+docker push gcr.io/<YOUR_PROJECT_ID>/treasure-shop:latest
+```
+Replace `<YOUR_PROJECT_ID>` with your actual GCP project ID.
+
+## 3. Create a GKE Cluster
+
+```
+gcloud container clusters create treasure-cluster --zone us-central1-a --num-nodes=2
+gcloud container clusters get-credentials treasure-cluster --zone us-central1-a
+```
+
+## 4. Prepare Kubernetes Manifests
+
+- Edit `k8s-deployment.yaml` and set your project ID in the image field.
+- Store environment variables as a secret:
+  ```
+  kubectl create secret generic treasure-shop-env --from-env-file=.env
+  ```
+
+## 5. Deploy to GKE
+
+```
+kubectl apply -f k8s-deployment.yaml
+```
+
+## 6. Get the External IP
+
+```
+kubectl get service treasure-shop-service
+```
+Wait until the `EXTERNAL-IP` is assigned.
+
+## 7. Point Your Domain/Subdomain to the External IP
+
+- Go to your DNS provider.
+- Add an **A record** for your domain or subdomain (e.g., `api.yourdomain.com`) pointing to the `EXTERNAL-IP`.
+
+## 8. (Optional) Set Up HTTPS
+
+- Use [Google-managed SSL certificates](https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs) or [cert-manager](https://cert-manager.io/).
+
+## 9. Test
+
+- Visit your domain in the browser.
+
+---
+
 ## Features
 
 - **User Management**: Register, login, and manage users with support for multiple roles per user (admin, writer, user, etc).
