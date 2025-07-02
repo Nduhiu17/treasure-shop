@@ -37,6 +37,9 @@ func (h *OrderStyleHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if styles == nil {
+		styles = []models.OrderStyle{}
+	}
 	c.JSON(http.StatusOK, styles)
 }
 

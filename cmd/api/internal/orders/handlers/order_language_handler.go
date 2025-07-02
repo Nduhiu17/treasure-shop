@@ -37,6 +37,9 @@ func (h *OrderLanguageHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if languages == nil {
+		languages = []models.OrderLanguage{}
+	}
 	c.JSON(http.StatusOK, languages)
 }
 
