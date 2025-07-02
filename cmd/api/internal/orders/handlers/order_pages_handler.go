@@ -37,6 +37,9 @@ func (h *OrderPagesHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if pages == nil {
+		pages = []models.OrderPages{}
+	}
 	c.JSON(http.StatusOK, pages)
 }
 

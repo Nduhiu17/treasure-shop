@@ -37,6 +37,9 @@ func (h *OrderLevelHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if levels == nil {
+		levels = []models.OrderLevel{}
+	}
 	c.JSON(http.StatusOK, levels)
 }
 

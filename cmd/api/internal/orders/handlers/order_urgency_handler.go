@@ -37,6 +37,9 @@ func (h *OrderUrgencyHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if urgencies == nil {
+		urgencies = []models.OrderUrgency{}
+	}
 	c.JSON(http.StatusOK, urgencies)
 }
 

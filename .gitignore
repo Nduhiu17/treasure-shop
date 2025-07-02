@@ -6,3 +6,5 @@ codebase-api-ingres.yaml
 example.env
 encrypt.yaml
 k8s-deployment.yaml
+cmd/api/seed.go
+k8s-deployments.yaml

@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
+	usermodels "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/models"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -223,6 +224,9 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 			}
 		}
 		users[i].Roles = roleNames
+	}
+	if users == nil {
+		users = []usermodels.User{}
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"users":     users,

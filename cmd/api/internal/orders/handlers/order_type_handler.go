@@ -71,6 +71,10 @@ func (h *OrderTypeHandler) GetByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "OrderType not found"})
 		return
 	}
+	if orderType == nil {
+		c.JSON(http.StatusOK, gin.H{"order_type": gin.H{}})
+		return
+	}
 	c.JSON(http.StatusOK, orderType)
 }
 
@@ -95,6 +99,9 @@ func (h *OrderTypeHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if orderTypes == nil {
+		orderTypes = []models.OrderType{}
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"order_types": orderTypes,
 		"total":       total,
@@ -108,6 +115,9 @@ func (h *OrderTypeHandler) ListAll(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	if orderTypes == nil {
+		orderTypes = []models.OrderType{}
 	}
 	c.JSON(http.StatusOK, gin.H{"order_types": orderTypes})
 }
