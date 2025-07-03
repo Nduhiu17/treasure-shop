@@ -379,6 +379,11 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Validate required fields
+	if order.OrderTypeID.IsZero() || order.OrderLevelID.IsZero() || order.OrderUrgencyID.IsZero() || order.OrderPagesID.IsZero() || order.Price == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required order fields: order_type_id, order_level_id, order_urgency_id, order_pages_id, price"})
+		return
+	}
 	insertedID, err := h.service.CreateOrder(&order)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order", "details": err.Error()})

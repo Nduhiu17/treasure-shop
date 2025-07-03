@@ -3,7 +3,8 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type OrderUrgency struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        string             `bson:"name" json:"name" binding:"required"`
-	Description string             `bson:"description" json:"description"`
+	ID                     primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Name                   string             `bson:"name" json:"name" binding:"required"`
+	Description            string             `bson:"description" json:"description"`
+	UrgencyPriceMultiplier float64            `bson:"urgency_price_multiplier" json:"urgency_price_multiplier" binding:"required"`
 }

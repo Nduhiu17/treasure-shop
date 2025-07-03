@@ -86,7 +86,7 @@ func main() {
 
 	// Enable CORS for all origins and methods (customize as needed)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://academiccodebase.com", "http://localhost:3000"},
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
