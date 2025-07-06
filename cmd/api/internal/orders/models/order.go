@@ -42,7 +42,7 @@ type Order struct {
 	SmsUpdate                  bool                `bson:"sms_update" json:"sms_update"`
 	FullTextCopySources        bool                `bson:"full_text_copy_sources" json:"full_text_copy_sources"`
 	SamePaperFromAnotherWriter bool                `bson:"same_paper_from_another_writer" json:"same_paper_from_another_writer"`
-	NoOfSources                int                 `bson:"no_of_sources" json:"no_of_sources"`
+	NoOfSources                string              `bson:"no_of_sources" json:"no_of_sources"`
 	PreferredWriterNumber      *string             `bson:"preferred_writer_number,omitempty" json:"preferred_writer_number,omitempty"`
 	OriginalOrderFile          *string             `bson:"original_order_file,omitempty" json:"original_order_file,omitempty"`
 	SubmissionTrials           int                 `bson:"submission_trials" json:"submission_trials"`

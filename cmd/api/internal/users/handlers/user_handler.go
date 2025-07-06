@@ -94,7 +94,7 @@ func (h *UserHandler) CreateOrder(c *gin.Context) {
 	order.FullTextCopySources = false
 	order.SamePaperFromAnotherWriter = false
 	order.Status = "pending_payment" // Initial status
-	order.NoOfSources = 0
+	order.NoOfSources = "0"
 
 	insertedID, err := h.orderService.CreateOrder(&order)
 	if err != nil {
