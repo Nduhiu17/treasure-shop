@@ -13,6 +13,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// GetOrderByID returns a single order by its ObjectID
+func (s *OrderService) GetOrderByID(orderID primitive.ObjectID) (*models.Order, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var order models.Order
+	err := s.orderCollection.FindOne(ctx, bson.M{"_id": orderID}).Decode(&order)
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
 type OrderService struct {
 	orderCollection *mongo.Collection
 	userCollection  *mongo.Collection // For checking user/writer existence

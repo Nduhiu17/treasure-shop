@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -85,37 +83,9 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 	userService := userservices.NewUserService(h.db)
 	orders = services.PopulateWriterNames(orders, userService)
 
-	// Fetch submissions for each order
-	orderIDs := make([]primitive.ObjectID, len(orders))
-	for i, o := range orders {
-		orderIDs[i] = o.ID
-	}
-	submissionsMap := make(map[primitive.ObjectID][]models.OrderSubmission)
-	orderSubmissionColl := h.db.Collection("order_submissions")
-	for _, oid := range orderIDs {
-		cursor, err := orderSubmissionColl.Find(c, bson.M{"order_id": oid})
-		if err == nil {
-			var subs []models.OrderSubmission
-			_ = cursor.All(c, &subs)
-			submissionsMap[oid] = subs
-		} else {
-			submissionsMap[oid] = []models.OrderSubmission{}
-		}
-	}
-	// Attach writer_submissions inside the order object, always present as an array
-	var ordersWithSubs []gin.H
-	for _, o := range orders {
-		subs := submissionsMap[o.ID]
-		orderMap := gin.H{}
-		// Copy all fields from o to orderMap
-		orderBytes, _ := json.Marshal(o)
-		_ = json.Unmarshal(orderBytes, &orderMap)
-		orderMap["writer_submissions"] = subs
-		ordersWithSubs = append(ordersWithSubs, orderMap)
-	}
-
+	// Return orders list without writer_submissions field
 	c.JSON(http.StatusOK, gin.H{
-		"orders":    ordersWithSubs,
+		"orders":    orders,
 		"total":     total,
 		"page":      page,
 		"page_size": pageSize,
@@ -365,6 +335,7 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 	// Populate WriterName
 	userService := userservices.NewUserService(h.db)
 	orders = services.PopulateWriterNames(orders, userService)
+	// Return orders list without writer_submissions field
 	c.JSON(http.StatusOK, gin.H{
 		"orders":    orders,
 		"total":     total,

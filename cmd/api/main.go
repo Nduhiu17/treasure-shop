@@ -104,6 +104,7 @@ func main() {
 	userHandler := uhandlers.NewUserHandler(client, dbName)
 	writerHandler := whandlers.NewWriterHandler(client, dbName)
 	orderHandler := ohandlers.NewOrderHandler(client, dbName)
+	orderDetailsHandler := ohandlers.NewOrderDetailsHandler(client, dbName)
 	orderLevelHandler := ohandlers.NewOrderLevelHandler(orderLevelService)
 	orderPagesHandler := ohandlers.NewOrderPagesHandler(orderPagesService)
 	orderUrgencyHandler := ohandlers.NewOrderUrgencyHandler(orderUrgencyService)
@@ -156,6 +157,8 @@ func main() {
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
+		// Order details with submissions (for any authenticated user, admin, writer, super_admin)
+		protected.GET("/orders/:id/details", orderDetailsHandler.GetOrderDetails)
 		// S3 file upload endpoint (must be authenticated)
 		protected.POST("/upload", ohandlers.S3UploadHandler)
 
