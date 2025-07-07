@@ -7,6 +7,69 @@ info:
 servers:
   - url: https://api.academiccodebase.com
 paths:
+  /api/users/me:
+    get:
+      summary: Get current logged-in user details
+      description: Returns the details of the currently authenticated user (from JWT token).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /api/users/{id}:
+    put:
+      summary: Update user details
+      description: |
+        Update user details. Only super_admin or admin can update any user. Writers and users can only update their own details.
+        Cannot update user_number or password via this endpoint.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User's ObjectID (24-char hex string)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                username:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                tier:
+                  type: string
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: User not found
   /auth/register:
     post:
       summary: Register a new user

@@ -216,3 +216,112 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 		"page_size": pageSize,
 	})
 }
+
+// GetCurrentUser returns the details of the currently logged-in user
+func (h *UserHandler) GetCurrentUser(c *gin.Context) {
+	userIDInterface, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID not found in token/context"})
+		return
+	}
+	userID, ok := userIDInterface.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID in context is not a string"})
+		return
+	}
+	userOID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+	user, err := h.userService.GetUserByID(userOID)
+	if err != nil || user == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	// Populate roles
+	userRoles, _ := h.userRoleService.GetByUserID(userOID)
+	var roleNames []string
+	for _, ur := range userRoles {
+		roleObj, err := h.roleService.GetByID(ur.RoleID)
+		if err == nil {
+			roleNames = append(roleNames, roleObj.Name)
+		}
+	}
+	user.Roles = roleNames
+	user.Password = "" // never return password
+	c.JSON(http.StatusOK, user)
+}
+
+// UpdateUser updates user details (admin/super_admin can update any user, others only their own)
+func (h *UserHandler) UpdateUser(c *gin.Context) {
+	userIDParam := c.Param("id")
+	if userIDParam == "" || len(userIDParam) != 24 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID parameter"})
+		return
+	}
+	userOID, err := primitive.ObjectIDFromHex(userIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+	// Get logged-in user info
+	loggedInUserID, _ := c.Get("userID")
+	loggedInUserOID, _ := primitive.ObjectIDFromHex(loggedInUserID.(string))
+	// Get logged-in user roles
+	userRoles, _ := h.userRoleService.GetByUserID(loggedInUserOID)
+	var isAdminOrSuper bool
+	for _, ur := range userRoles {
+		roleObj, err := h.roleService.GetByID(ur.RoleID)
+		if err == nil && (roleObj.Name == "admin" || roleObj.Name == "super_admin") {
+			isAdminOrSuper = true
+			break
+		}
+	}
+	// Only admin/super_admin can update other users
+	if !isAdminOrSuper && loggedInUserOID != userOID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only update your own details"})
+		return
+	}
+	// Fetch the user to update
+	user, err := h.userService.GetUserByID(userOID)
+	if err != nil || user == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	// Bind update fields (ignore password and user_number)
+	var updateData struct {
+		Email     string `json:"email"`
+		Username  string `json:"username"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Tier      string `json:"tier"`
+	}
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if updateData.Email != "" {
+		user.Email = updateData.Email
+	}
+	if updateData.Username != "" {
+		user.Username = updateData.Username
+	}
+	if updateData.FirstName != "" {
+		user.FirstName = updateData.FirstName
+	}
+	if updateData.LastName != "" {
+		user.LastName = updateData.LastName
+	}
+	if updateData.Tier != "" {
+		user.Tier = updateData.Tier
+	}
+	// Do not update password or user_number
+	err = h.userService.UpdateUser(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user", "details": err.Error()})
+		return
+	}
+	user.Password = ""
+	c.JSON(http.StatusOK, user)
+}

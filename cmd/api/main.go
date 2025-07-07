@@ -86,7 +86,7 @@ func main() {
 
 	// Enable CORS for frontend on http://localhost:3000 (no wildcard when AllowCredentials is true)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000","https://academiccodebase.com"},
+		AllowOrigins:     []string{"http://localhost:3000", "https://academiccodebase.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -165,6 +165,10 @@ func main() {
 		// User Routes
 		protected.POST("/orders", userHandler.CreateOrder)
 		protected.GET("/orders/me", userHandler.GetUserOrders)
+		// Get current user details
+		protected.GET("/users/me", userHandler.GetCurrentUser)
+		// Update user details (PUT)
+		protected.PUT("/users/:id", userHandler.UpdateUser)
 
 		// Payment endpoint for orders (PayPal or Mastercard)
 		protected.POST("/orders/pay", ohandlers.PayForOrderHandler)
