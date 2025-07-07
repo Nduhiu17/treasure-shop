@@ -13,7 +13,6 @@ import (
 	ohandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/handlers"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	uhandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/handlers"
-	userrolehandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/handlers"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
 	whandlers "github.com/nduhiu17/treasure-shop/cmd/api/internal/writers/handlers"
 	swaggerFiles "github.com/swaggo/files"
@@ -23,9 +22,9 @@ import (
 
 func registerRoleRoutes(r *gin.Engine, db *mongo.Database) {
 	roleService := userservices.NewRoleService(db)
-	roleHandler := userrolehandlers.NewRoleHandler(roleService)
+	roleHandler := uhandlers.NewRoleHandler(roleService)
 	userRoleService := userservices.NewUserRoleService(db)
-	userRoleHandler := userrolehandlers.NewUserRoleHandler(userRoleService)
+	userRoleHandler := uhandlers.NewUserRoleHandler(userRoleService)
 
 	admin := r.Group("/api/admin")
 	admin.Use(middleware.AuthMiddleware())
@@ -159,6 +158,8 @@ func main() {
 	{
 		// Order details with submissions (for any authenticated user, admin, writer, super_admin)
 		protected.GET("/orders/:id/details", orderDetailsHandler.GetOrderDetails)
+		// Get all submissions for an order (sorted by date desc)
+		protected.GET("/orders/:id/submissions", orderHandler.GetOrderSubmissions)
 		// S3 file upload endpoint (must be authenticated)
 		protected.POST("/upload", ohandlers.S3UploadHandler)
 
@@ -234,8 +235,10 @@ func main() {
 			writer.PUT("/orders/:id/submit", orderHandler.SubmitOrder)
 			writer.PUT("/orders/:id/assignment-response", orderHandler.WriterAcceptAssignment)
 			writer.GET("/orders/:writer_id", orderHandler.GetOrdersByWriter)
-
 		}
+
+		// Order Submissions endpoint (all roles, authenticated)
+		// protected.GET("/orders/:id/submissions", orderHandler.GetOrderSubmissions)
 		// Order Review Routes (User protected for approval/feedback)
 		orderReview := protected.Group("/orders/:id/review")
 		orderReview.Use(middleware.AuthMiddleware())

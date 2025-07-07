@@ -8,10 +8,8 @@ import (
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	orderservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type OrderDetailsHandler struct {
@@ -55,20 +53,12 @@ func (h *OrderDetailsHandler) GetOrderDetails(c *gin.Context) {
 	userService := userservices.NewUserService(h.db)
 	order = orderservices.PopulateWriterNames([]models.Order{order}, userService)[0]
 
-	// Get submissions (descending by submission_date)
-	orderSubmissionColl := h.db.Collection("order_submissions")
-	findOpts := &options.FindOptions{Sort: bson.D{{Key: "submission_date", Value: -1}}}
-	cursor, err := orderSubmissionColl.Find(c, bson.M{"order_id": order.ID}, findOpts)
-	var subs []models.OrderSubmission
-	if err == nil {
-		_ = cursor.All(c, &subs)
-	} else {
-		subs = []models.OrderSubmission{}
-	}
+	// Marshal order to map and remove submissions fields
 	orderMap := gin.H{}
 	orderBytes, _ := json.Marshal(order)
 	_ = json.Unmarshal(orderBytes, &orderMap)
-	orderMap["writer_submissions"] = subs
-
+	// Remove writer_submissions and submissions fields if present
+	delete(orderMap, "writer_submissions")
+	delete(orderMap, "submissions")
 	c.JSON(http.StatusOK, orderMap)
 }

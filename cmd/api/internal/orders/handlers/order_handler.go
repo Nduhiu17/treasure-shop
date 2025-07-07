@@ -1,16 +1,57 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/services"
 	userservices "github.com/nduhiu17/treasure-shop/cmd/api/internal/users/services"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+// GetOrderSubmissions returns all submissions for a given order, sorted by creation date descending
+func (h *OrderHandler) GetOrderSubmissions(c *gin.Context) {
+	orderID := c.Param("id")
+	if orderID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Order ID is required"})
+		return
+	}
+	oid, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid order ID"})
+		return
+	}
+
+	db := h.service.GetDB()
+	submissionsCol := db.Collection("order_submissions")
+
+	filter := bson.M{"order_id": oid}
+	cursor, err := submissionsCol.Find(context.Background(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch submissions"})
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	var submissions []models.OrderSubmission
+	if err := cursor.All(context.Background(), &submissions); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode submissions"})
+		return
+	}
+
+	// Sort by SubmissionDate descending
+	sort.Slice(submissions, func(i, j int) bool {
+		return submissions[i].SubmissionDate.After(submissions[j].SubmissionDate)
+	})
+
+	c.JSON(http.StatusOK, gin.H{"submissions": submissions})
+}
 
 type OrderHandler struct {
 	service *services.OrderService
