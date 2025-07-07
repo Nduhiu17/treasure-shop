@@ -10,7 +10,7 @@ type OrderFeedback struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	OrderID      primitive.ObjectID `bson:"order_id" json:"order_id"`
 	Feedback     string             `bson:"feedback" json:"feedback"`
-	FeedbackFile string             `bson:"feedback_file" json:"feedback_file"`
+	FeedbackFile string             `bson:"feedback_file,omitempty" json:"feedback_file,omitempty"`
 	CreatedAt    time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt    time.Time          `bson:"updated_at" json:"updated_at"`
 }
