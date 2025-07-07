@@ -265,14 +265,15 @@ func (h *OrderHandler) ProvideFeedback(c *gin.Context) {
 	}
 
 	var feedbackRequest struct {
-		Feedback string `json:"feedback"`
+		Feedback     string `json:"feedback"`
+		FeedbackFile string `json:"feed_back_file"`
 	}
 	if err := c.ShouldBindJSON(&feedbackRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.service.ProvideFeedback(orderOID, userOID, feedbackRequest.Feedback); err != nil {
+	if err := h.service.ProvideFeedback(orderOID, userOID, feedbackRequest.Feedback, feedbackRequest.FeedbackFile); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to provide feedback"})
 		return
 	}

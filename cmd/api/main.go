@@ -116,6 +116,9 @@ func main() {
 		services.NewOrderTypeService(orderTypeCol),
 	)
 
+	// Feedback Handler
+	feedbackHandler := ohandlers.NewFeedbackHandler(db)
+
 	// Public Routes
 	r.POST("/auth/register", authHandler.Register)
 	r.POST("/auth/login", authHandler.Login)
@@ -246,6 +249,9 @@ func main() {
 			orderReview.PUT("/approve", orderHandler.ApproveOrder)
 			orderReview.PUT("/feedback", orderHandler.ProvideFeedback)
 		}
+
+		// Get all feedbacks for an order (all roles, authenticated)
+		protected.GET("/orders/:id/feedbacks", feedbackHandler.GetOrderFeedbacks)
 	}
 
 	// Register role and user_role admin routes

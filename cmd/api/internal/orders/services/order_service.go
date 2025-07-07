@@ -276,7 +276,7 @@ func (s *OrderService) ApproveOrder(orderID, userID primitive.ObjectID) error {
 	return err
 }
 
-func (s *OrderService) ProvideFeedback(orderID, userID primitive.ObjectID, feedback string) error {
+func (s *OrderService) ProvideFeedback(orderID, userID primitive.ObjectID, feedback, feedbackFile string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -287,22 +287,37 @@ func (s *OrderService) ProvideFeedback(orderID, userID primitive.ObjectID, feedb
 	}
 
 	// Increment apply_feedback_requests when feedback is requested
-	// Take the current number of requests of the order and increment it by 1
-	feedbackCount := 0
-	err := s.orderCollection.FindOne(ctx, bson.M{"_id": orderID}).Decode(&bson.M{"apply_feedback_requests": &feedbackCount})
+	var order models.Order
+	err := s.orderCollection.FindOne(ctx, bson.M{"_id": orderID}).Decode(&order)
 	if err != nil {
 		return errors.New("failed to retrieve current feedback request count")
 	}
-
+	feedbackCount := order.ApplyFeedbackRequests
 	if feedbackCount >= 4 {
 		return errors.New("feedback request limit reached for this order")
 	}
-	// Update the order status to 'feedback' and set the feedback
+
+	// Update the order status to 'assigned' and set the feedback
 	_, err = s.orderCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": orderID, "user_id": userID, "status": "submitted_for_review"},
-		bson.M{"$set": bson.M{"status": "feedback", "feedback": feedback, "feedback_date": time.Now()}, "$inc": bson.M{"apply_feedback_requests": feedbackCount + 1}},
+		bson.M{"$set": bson.M{"status": "assigned", "feedback": feedback, "feedback_date": time.Now()}, "$inc": bson.M{"apply_feedback_requests": 1}},
 	)
+	if err != nil {
+		return err
+	}
+
+	// Create a new feedback record
+	feedbackDoc := models.OrderFeedback{
+		ID:           primitive.NewObjectID(),
+		OrderID:      orderID,
+		Feedback:     feedback,
+		FeedbackFile: feedbackFile,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	feedbackCol := s.orderCollection.Database().Collection("order_feedbacks")
+	_, err = feedbackCol.InsertOne(ctx, feedbackDoc)
 	return err
 }
 
