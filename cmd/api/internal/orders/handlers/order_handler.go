@@ -287,7 +287,6 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 		// Try to get from query param as fallback for misrouted requests
 		writerID = c.Query("writer_id")
 	}
-	fmt.Println("Writer ID:", writerID)
 	if len(writerID) != 24 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid writer ID format. Must be a 24-character hex string ObjectID."})
 		return
@@ -296,6 +295,12 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid writer ID format. Must be a valid hex ObjectID."})
 		return
+	}
+	// Optional status filter
+	var statusPtr *string
+	status := c.Query("status")
+	if status != "" {
+		statusPtr = &status
 	}
 	// Optional pagination
 	page := 1
@@ -312,7 +317,7 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 	if pageSize < 1 || pageSize > 100 {
 		pageSize = 10
 	}
-	orders, total, err := h.service.GetOrdersFiltered(nil, &writerOID, nil, page, pageSize)
+	orders, total, err := h.service.GetOrdersFiltered(nil, &writerOID, statusPtr, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list orders for writer"})
 		return

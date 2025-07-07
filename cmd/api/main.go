@@ -84,9 +84,9 @@ func main() {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	// Enable CORS for all origins and methods (customize as needed)
+	// Enable CORS for frontend on http://localhost:3000 (no wildcard when AllowCredentials is true)
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"http://localhost:3000","https://academiccodebase.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
