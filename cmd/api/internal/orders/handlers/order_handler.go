@@ -266,7 +266,7 @@ func (h *OrderHandler) ProvideFeedback(c *gin.Context) {
 
 	var feedbackRequest struct {
 		Feedback     string `json:"feedback"`
-		FeedbackFile string `json:"feed_back_file"`
+		FeedbackFile string `json:"feedback_file"`
 	}
 	if err := c.ShouldBindJSON(&feedbackRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
