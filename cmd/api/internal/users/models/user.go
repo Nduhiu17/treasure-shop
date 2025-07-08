@@ -18,8 +18,9 @@ type User struct {
 // Each role has an ID and a role name
 // e.g., {"_id": ObjectId, "name": "admin"}
 type Role struct {
-	ID   primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	Name string             `bson:"name" json:"name" binding:"required"`
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Name        string             `bson:"name" json:"name" binding:"required"`
+	Description string             `bson:"description,omitempty" json:"description,omitempty"`
 }
 
 // UserRole struct for user_roles collection

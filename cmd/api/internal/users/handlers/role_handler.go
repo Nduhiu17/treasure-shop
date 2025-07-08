@@ -23,6 +23,10 @@ func (h *RoleHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// Description is optional, but ensure it's set if present
+	if desc, ok := c.GetPostForm("description"); ok {
+		role.Description = desc
+	}
 	if err := h.service.Create(&role); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -63,6 +67,10 @@ func (h *RoleHandler) Update(c *gin.Context) {
 	if err := c.ShouldBindJSON(&update); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+	// Allow updating description if present
+	if desc, ok := update["description"]; ok {
+		update["description"] = desc
 	}
 	if err := h.service.Update(id, update); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

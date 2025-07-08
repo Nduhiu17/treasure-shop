@@ -949,6 +949,15 @@ components:
             type: string
         tier:
           type: string
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
     UserLogin:
       type: object
       properties:
