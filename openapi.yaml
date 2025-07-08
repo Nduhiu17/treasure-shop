@@ -959,6 +959,9 @@ components:
     Order:
       type: object
       properties:
+        order_number:
+          type: string
+          description: Unique alphanumeric order number (2 letters + 2 digits, e.g., Z1R4)
         user_id:
           type: string
         order_type_id:

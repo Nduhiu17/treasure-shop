@@ -1,8 +1,11 @@
+// generateOrderNumber generates a random alphanumeric order number (2 letters + 2 digits, e.g., Z1R4)
+
 package services
 
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"time"
 
 	"github.com/nduhiu17/treasure-shop/cmd/api/internal/orders/models"
@@ -12,6 +15,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// generateOrderNumber generates a random alphanumeric order number (2 letters + 2 digits, e.g., Z1R4)
+func generateOrderNumber() string {
+	letters := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	digits := []rune("0123456789")
+	rand.Seed(time.Now().UnixNano())
+	return string(letters[rand.Intn(26)]) + string(digits[rand.Intn(10)]) + string(letters[rand.Intn(26)]) + string(digits[rand.Intn(10)])
+}
 
 // GetOrderByID returns a single order by its ObjectID
 func (s *OrderService) GetOrderByID(orderID primitive.ObjectID) (*models.Order, error) {
@@ -43,6 +54,7 @@ func (s *OrderService) CreateOrder(order *models.Order) (primitive.ObjectID, err
 	order.ApplyFeedbackRequests = 0 // Default to zero on creation
 	order.CreatedAt = time.Now()
 	order.UpdatedAt = time.Now()
+	order.OrderNumber = generateOrderNumber()
 	res, err := s.orderCollection.InsertOne(ctx, order)
 	if err != nil {
 		return primitive.NilObjectID, err

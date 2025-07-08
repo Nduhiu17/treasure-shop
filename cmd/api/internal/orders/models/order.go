@@ -7,6 +7,7 @@ import (
 )
 
 type Order struct {
+	OrderNumber                string              `bson:"order_number" json:"order_number"`
 	ID                         primitive.ObjectID  `bson:"_id,omitempty" json:"id,omitempty"`
 	UserID                     primitive.ObjectID  `bson:"user_id" json:"user_id"`
 	OrderTypeID                primitive.ObjectID  `bson:"order_type_id" json:"order_type_id"` // Foreign key to OrderType
