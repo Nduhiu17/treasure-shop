@@ -45,5 +45,8 @@ func (h *FeedbackHandler) GetOrderFeedbacks(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode feedbacks"})
 		return
 	}
+	if feedbacks == nil {
+		feedbacks = []models.OrderFeedback{}
+	}
 	c.JSON(http.StatusOK, gin.H{"feedbacks": feedbacks})
 }
