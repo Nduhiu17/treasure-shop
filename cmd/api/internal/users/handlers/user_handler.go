@@ -118,7 +118,7 @@ func (h *UserHandler) GetUserOrders(c *gin.Context) {
 
 	// Pagination params
 	page := 1
-	pageSize := 10
+	pageSize := 8
 	if p := c.Query("page"); p != "" {
 		fmt.Sscanf(p, "%d", &page)
 	}
@@ -129,7 +129,7 @@ func (h *UserHandler) GetUserOrders(c *gin.Context) {
 		page = 1
 	}
 	if pageSize < 1 || pageSize > 100 {
-		pageSize = 10
+		pageSize = 8
 	}
 	// Status filter
 	var statusPtr *string
@@ -173,7 +173,7 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 	}
 	// Pagination params
 	page := 1
-	pageSize := 10
+	pageSize := 8
 	if p := c.Query("page"); p != "" {
 		fmt.Sscanf(p, "%d", &page)
 	}
@@ -184,7 +184,7 @@ func (h *UserHandler) ListUsersByRole(c *gin.Context) {
 		page = 1
 	}
 	if pageSize < 1 || pageSize > 100 {
-		pageSize = 10
+		pageSize = 8
 	}
 	users, total, err := h.userService.GetUsersByRolePaginated(role, h.userRoleService, h.roleService, page, pageSize)
 	if err != nil {

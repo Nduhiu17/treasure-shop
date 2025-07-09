@@ -68,7 +68,7 @@ func NewOrderHandler(client *mongo.Client, dbName string) *OrderHandler {
 func (h *OrderHandler) ListOrders(c *gin.Context) {
 	// Pagination params
 	page := 1
-	pageSize := 10
+	pageSize := 8
 	if p := c.Query("page"); p != "" {
 		fmt.Sscanf(p, "%d", &page)
 	}
@@ -79,7 +79,7 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 		page = 1
 	}
 	if pageSize < 1 || pageSize > 100 {
-		pageSize = 10
+		pageSize = 8
 	}
 
 	// Filtering params
@@ -346,7 +346,7 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 	}
 	// Optional pagination
 	page := 1
-	pageSize := 10
+	pageSize := 8
 	if p := c.Query("page"); p != "" {
 		fmt.Sscanf(p, "%d", &page)
 	}
@@ -357,7 +357,7 @@ func (h *OrderHandler) GetOrdersByWriter(c *gin.Context) {
 		page = 1
 	}
 	if pageSize < 1 || pageSize > 100 {
-		pageSize = 10
+		pageSize = 8
 	}
 	orders, total, err := h.service.GetOrdersFiltered(nil, &writerOID, statusPtr, page, pageSize)
 	if err != nil {
