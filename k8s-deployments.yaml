@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codebase-api-deployment
+  labels:
+    app: codebase-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codebase-api
+  template:
+    metadata:
+      labels:
+        app: codebase-api
+    spec:
+      containers:
+      - name: codebase-api
+        image: nduhiu254/codebase-service:v1.0.4
+        ports:
+        - containerPort: 8080
+        env:
+          - name: MONGODB_URI
+            valueFrom:
+              secretKeyRef:
+                name: academic-api-env
+                key: MONGODB_URI
+          - name: MONGODB_DATABASE
+            value: codebasedb
+          - name: DB_NAME
+            value: codebasedb
+          - name: REDIS_URL
+            value: "redis://redis:6379"
+          - name: JWT_EXPIRATION
+            value: 1h
+          - name: JWT_ALGORITHM
+            value: HS256
+          - name: JWT_ISSUER
+            value: treasure-hunt-app
+          - name: JWT_AUDIENCE
+            value: treasure-hunt-users
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: academic-api-env
+                key: JWT_SECRET
+          - name: PORT
+            value: "8080"
+          - name: AWS_REGION
+            value: eu-north-1
+          - name: AWS_BUCKET
+            value: academic-code-base
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: academic-api-env
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: academic-api-env
+                key: AWS_SECRET_ACCESS_KEY
+          - name: JWT_REFRESH_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: academic-api-env
+                key: JWT_REFRESH_SECRET
+          - name: PAYPAL_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: academic-api-env
+                key: PAYPAL_CLIENT_ID
+          - name: PAYPAL_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: academic-api-env
+                key: PAYPAL_CLIENT_SECRET
+          - name: PAYPAL_BASE_URL
+            value: https://api-m.sandbox.paypal.com

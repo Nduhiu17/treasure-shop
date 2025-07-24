@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-academiccodebase-com-tls
+spec:
+  secretName: api-academiccodebase-com-tls
+  issuerRef:
+    name: letsencrypt-clusterissuer
+    kind: ClusterIssuer
+  commonName: api.academiccodebase.com
+  dnsNames:
+    - api.academiccodebase.com

@@ -1,15 +1,60 @@
 openapi: 3.0.3
 info:
-  title: Academic Codebase API
+  title: Treasure Shop API
   version: 1.0.0
-  description: API documentation for the Treasure Shop backend
+  description: OpenAPI documentation for the Treasure Shop backend (Go/Gin/MongoDB)
 servers:
   - url: https://api.academiccodebase.com
+  - url: http://localhost:8080
 paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Registration successful
+        '400':
+          description: Bad request
+  /auth/login:
+    post:
+      summary: Login and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+  /auth/google:
+    post:
+      summary: Google OAuth2 login/register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Google login/register successful
+        '400':
+          description: Invalid token
   /api/users/me:
     get:
       summary: Get current logged-in user details
-      description: Returns the details of the currently authenticated user (from JWT token).
       security:
         - bearerAuth: []
       responses:
@@ -21,13 +66,9 @@ paths:
                 $ref: '#/components/schemas/User'
         '401':
           description: Unauthorized
-
   /api/users/{id}:
     put:
       summary: Update user details
-      description: |
-        Update user details. Only super_admin or admin can update any user. Writers and users can only update their own details.
-        Cannot update user_number or password via this endpoint.
       security:
         - bearerAuth: []
       parameters:
@@ -36,7 +77,6 @@ paths:
           required: true
           schema:
             type: string
-          description: User's ObjectID (24-char hex string)
       requestBody:
         required: true
         content:
@@ -69,34 +109,43 @@ paths:
           description: Forbidden
         '404':
           description: User not found
-  /auth/register:
-    post:
-      summary: Register a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-      responses:
-        '201':
-          description: Registration successful
-        '400':
-          description: Bad request
-  /auth/login:
-    post:
-      summary: Login and get JWT token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserLogin'
+  /api/admin/users:
+    get:
+      summary: List users by role (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          schema:
+            type: integer
       responses:
         '200':
-          description: Login successful
-        '401':
-          description: Invalid credentials
+          description: List of users (paginated)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
   /api/orders:
     post:
       summary: Create a new order
@@ -122,33 +171,25 @@ paths:
           name: user_id
           schema:
             type: string
-          description: Filter by user ID (optional)
         - in: query
           name: writer_id
           schema:
             type: string
-          description: Filter by writer ID (optional)
         - in: query
           name: status
           schema:
             type: string
-          description: Filter by order status (optional)
         - in: query
           name: page
           schema:
             type: integer
-            minimum: 1
-          description: Page number (default 1)
         - in: query
           name: page_size
           schema:
             type: integer
-            minimum: 1
-            maximum: 100
-          description: Page size (default 10, max 100)
       responses:
         '200':
-          description: List of orders (paginated and filterable)
+          description: List of orders (paginated)
           content:
             application/json:
               schema:
@@ -167,8 +208,6 @@ paths:
   /api/orders/me:
     get:
       summary: Get current user's orders
-      description: |
-        Returns the current user's orders. Supports filtering by order status and pagination.
       security:
         - bearerAuth: []
       parameters:
@@ -176,23 +215,17 @@ paths:
           name: status
           schema:
             type: string
-          description: Filter by order status (optional)
         - in: query
           name: page
           schema:
             type: integer
-            minimum: 1
-          description: Page number (default 1)
         - in: query
           name: page_size
           schema:
             type: integer
-            minimum: 1
-            maximum: 100
-          description: Page size (default 10, max 100)
       responses:
         '200':
-          description: List of orders for current user (paginated and filterable)
+          description: List of orders for current user (paginated)
           content:
             application/json:
               schema:
@@ -213,11 +246,6 @@ paths:
   /api/writer/orders/{writer_id}:
     get:
       summary: Get all orders assigned to a writer (writer dashboard endpoint)
-      description: |
-        This is the canonical endpoint for fetching all orders assigned to a writer (for the writer dashboard, etc).
-        Requires authentication as a writer, admin, or super_admin. 
-        
-        **Note:** This endpoint is protected by WriterRoleMiddleware and requires a valid JWT for a user with the appropriate role.
       security:
         - bearerAuth: []
       parameters:
@@ -226,25 +254,18 @@ paths:
           required: true
           schema:
             type: string
-          description: Writer's ObjectID (24-char hex string)
         - in: query
           name: status
           schema:
             type: string
-          description: Filter by order status (optional, e.g. 'pending', 'in_progress', 'submitted', etc)
         - in: query
           name: page
           schema:
             type: integer
-            minimum: 1
-          description: Page number (default 1)
         - in: query
           name: page_size
           schema:
             type: integer
-            minimum: 1
-            maximum: 100
-          description: Page size (default 10, max 100)
       responses:
         '200':
           description: List of orders for writer (paginated)
@@ -263,548 +284,9 @@ paths:
                     type: integer
                   page_size:
                     type: integer
-  /api/writers:
-    post:
-      summary: Create a writer (admin only)
-      security:
-        - bearerAuth: []
-      responses:
-        '201':
-          description: Writer created
-    get:
-      summary: List all writers (admin only)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: List of writers
-  /api/writers/{id}:
-    get:
-      summary: Get writer by ID (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Writer details
-    put:
-      summary: Update writer (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Writer updated
-    delete:
-      summary: Delete writer (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Writer deleted
-  /api/admin/orders:
-    get:
-      summary: List all orders (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-          description: Page number (default 1)
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Page size (default 10, max 100)
-        - in: query
-          name: user_id
-          schema:
-            type: string
-          description: Filter by user ID (optional)
-        - in: query
-          name: writer_id
-          schema:
-            type: string
-          description: Filter by writer ID (optional)
-        - in: query
-          name: status
-          schema:
-            type: string
-          description: Filter by order status (optional)
-      responses:
-        '200':
-          description: List of orders (paginated and filterable)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  orders:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Order'
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  page_size:
-                    type: integer
-  /api/admin/orders/submitted:
-    get:
-      summary: List submitted orders (admin only)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: List of submitted orders
-  /api/admin/orders/{id}/assign:
-    put:
-      summary: Assign order to writer (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                writer_id:
-                  type: string
-      responses:
-        '200':
-          description: Order assigned
-  /api/admin/users:
-    get:
-      summary: List users by role (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: role
-          schema:
-            type: string
-          required: true
-          description: Role to filter by (user, admin, super_admin, writer, etc)
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-          description: Page number (default 1)
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Page size (default 10, max 100)
-      responses:
-        '200':
-          description: List of users (paginated)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  users:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  page_size:
-                    type: integer
-  /api/admin/order-types:
-    post:
-      summary: Create order type (admin only)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderType'
-      responses:
-        '201':
-          description: Order type created
-    get:
-      summary: List order types (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-          description: Page number (default 1)
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Page size (default 10, max 100)
-      responses:
-        '200':
-          description: List of order types (paginated)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  order_types:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/OrderType'
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  page_size:
-                    type: integer
-  /api/order-levels:
-    get:
-      summary: List all order levels
-      responses:
-        '200':
-          description: List of order levels
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OrderLevel'
-  /api/order-levels/{id}:
-    get:
-      summary: Get order level by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order level details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderLevel'
-  /api/admin/order-levels:
-    post:
-      summary: Create order level (admin only)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderLevel'
-      responses:
-        '201':
-          description: Order level created
-    
-  /api/admin/order-levels/{id}:
-    put:
-      summary: Update order level (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderLevel'
-      responses:
-        '200':
-          description: Order level updated
-    delete:
-      summary: Delete order level (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order level deleted
-  /api/writer/orders/{id}/submit:
-    post:
-      summary: Submit order as writer
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                content:
-                  type: string
-      responses:
-        '200':
-          description: Order submitted
-  /api/writer/orders/{id}/assignment-response:
-    put:
-      summary: Writer assignment response (accept/decline)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                accept:
-                  type: boolean
-      responses:
-        '200':
-          description: Assignment response recorded
-  /api/order-pages:
-    get:
-      summary: List all order pages
-      responses:
-        '200':
-          description: List of order pages
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OrderPages'
-  /api/order-pages/{id}:
-    get:
-      summary: Get order pages by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order pages details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderPages'
-  /api/admin/order-pages:
-    post:
-      summary: Create order pages (admin only)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderPages'
-      responses:
-        '201':
-          description: Order pages created
-  /api/admin/order-pages/{id}:
-    put:
-      summary: Update order pages (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderPages'
-      responses:
-        '200':
-          description: Order pages updated
-    delete:
-      summary: Delete order pages (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order pages deleted
-  /api/order-urgency:
-    get:
-      summary: List all order urgencies
-      responses:
-        '200':
-          description: List of order urgencies
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OrderUrgency'
-  /api/order-urgency/{id}:
-    get:
-      summary: Get order urgency by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order urgency details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrderUrgency'
-  /api/admin/order-urgency:
-    post:
-      summary: Create order urgency (admin only)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderUrgency'
-      responses:
-        '201':
-          description: Order urgency created
-  /api/admin/order-urgency/{id}:
-    put:
-      summary: Update order urgency (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrderUrgency'
-      responses:
-        '200':
-          description: Order urgency updated
-    delete:
-      summary: Delete order urgency (admin only)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order urgency deleted
-  /api/orders/pay:
-    post:
-      summary: Pay for an order (PayPal or Mastercard)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PaymentRequest'
-      responses:
-        '200':
-          description: Payment successful or PayPal order/capture response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  paypal_order_id:
-                    type: string
-                  status:
-                    type: string
-                  error:
-                    type: string
-                  details:
-                    type: string
-        '400':
-          description: Bad request
-        '500':
-          description: Payment failed
   /api/orders/{id}/submissions:
     get:
       summary: Get all submissions for an order
-      description: |
-        Returns all submissions for a given order, sorted by submission date descending (most recent first).
-        No pagination or filtering is applied. Requires authentication (any role).
       security:
         - bearerAuth: []
       parameters:
@@ -813,7 +295,6 @@ paths:
           required: true
           schema:
             type: string
-          description: Order's ObjectID (24-char hex string)
       responses:
         '200':
           description: List of submissions for the order
@@ -833,8 +314,6 @@ paths:
   /api/orders/{id}/feedbacks:
     get:
       summary: Get all feedbacks for an order
-      description: |
-        Returns all feedback records for a given order, sorted by creation date descending. No pagination or filtering. Returns an empty list if no feedbacks exist. Requires authentication (any role).
       security:
         - bearerAuth: []
       parameters:
@@ -843,7 +322,6 @@ paths:
           required: true
           schema:
             type: string
-          description: Order's ObjectID (24-char hex string)
       responses:
         '200':
           description: List of feedbacks for the order
@@ -860,10 +338,9 @@ paths:
           description: Unauthorized
         '404':
           description: Order not found
-  /api/orders/{id}/review/approve:
-    put:
-      summary: Approve an order
-      description: Approve an order that is in 'submitted_for_review' status. Only the order's user can approve. Requires authentication.
+  /api/orders/{id}/chat/messages:
+    get:
+      summary: Get chat messages for an order
       security:
         - bearerAuth: []
       parameters:
@@ -872,22 +349,34 @@ paths:
           required: true
           schema:
             type: string
-          description: Order's ObjectID (24-char hex string)
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          schema:
+            type: integer
       responses:
         '200':
-          description: Order approved
-        '400':
-          description: Invalid order ID or order not in correct status
+          description: List of chat messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+                  total:
+                    type: integer
         '401':
           description: Unauthorized
         '404':
           description: Order not found
-
-  /api/orders/{id}/review/feedback:
-    put:
-      summary: Provide feedback for an order
-      description: |
-        Submit feedback for an order in 'submitted_for_review' status. Only the order's user can provide feedback. Sets order status to 'assigned' and creates a feedback record. Requires authentication.
+    post:
+      summary: Send a chat message (REST fallback)
       security:
         - bearerAuth: []
       parameters:
@@ -896,7 +385,6 @@ paths:
           required: true
           schema:
             type: string
-          description: Order's ObjectID (24-char hex string)
       requestBody:
         required: true
         content:
@@ -904,22 +392,292 @@ paths:
             schema:
               type: object
               properties:
-                feedback:
+                message:
                   type: string
-                  description: Feedback text
-                feed_back_file:
+                receiver_id:
                   type: string
-                  description: URL for the feedback file (may be empty or omitted)
       responses:
-        '200':
-          description: Feedback submitted
+        '201':
+          description: Message sent
         '400':
-          description: Invalid order ID, order not in correct status, or invalid payload
+          description: Invalid input
         '401':
           description: Unauthorized
         '404':
           description: Order not found
+  /api/orders/{id}/chat/read:
+    post:
+      summary: Mark messages as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Messages marked as read
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+  /api/orders/{id}/chat/status:
+    get:
+      summary: Get chat online/offline status
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Online/offline status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_online:
+                    type: boolean
+                  writer_online:
+                    type: boolean
+        '401':
+          description: Unauthorized
+        '404':
+          description: Order not found
+  /api/support-users/all:
+    post:
+      summary: Create or get a support chat session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                support_id:
+                  type: string
+      responses:
+        '201':
+          description: Support chat created
+        '400':
+          description: Bad request
 
+  /api/support/chat/invite-writer:
+    post:
+      summary: Invite a writer to a support chat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chat_id:
+                  type: string
+                writer_id:
+                  type: string
+      responses:
+        '200':
+          description: Writer invited
+        '400':
+          description: Bad request
+
+  /api/support/chat/accept-invite:
+    post:
+      summary: Writer accepts support chat invite
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chat_id:
+                  type: string
+                writer_id:
+                  type: string
+      responses:
+        '200':
+          description: Invite accepted
+        '400':
+          description: Bad request
+
+  /api/support/chat/messages:
+    post:
+      summary: Send a message in a support chat (REST)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                chat_id:
+                  type: string
+                message:
+                  type: string
+                receiver_id:
+                  type: string
+      responses:
+        '201':
+          description: Message sent
+        '400':
+          description: Bad request
+    get:
+      summary: Get messages in a support chat (REST)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: chat_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChatMessage'
+                  total:
+                    type: integer
+        '400':
+          description: Bad request
+
+
+  /api/support/chat/ws/{chat_id}:
+    get:
+      summary: WebSocket for support chat
+      description: |
+        Real-time support chat for user, support, and writer.
+        
+        **WebSocket connection:**
+        - URL: `/api/support/chat/ws/{chat_id}?token=JWT`
+        - Authenticate with JWT in `token` query param or `Authorization: Bearer <JWT>` header.
+        
+        **Message format:**
+        ```json
+        {
+          "type": "message" | "invite" | ...,
+          "chat_id": "...",
+          "sender_id": "...",
+          "receiver_id": "...",
+          "message": "...",
+          "writer_id": "...", // for invite
+          "timestamp": 1720799999
+        }
+        ```
+        
+        - `type` can be `message` (chat message), `invite` (writer invite), etc.
+        - All messages are broadcast to all connected chat participants.
+        - On `invite`, an event is sent to the invited writer.
+      parameters:
+        - in: path
+          name: chat_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: token
+          schema:
+            type: string
+          description: JWT token for authentication (alternative to Authorization header)
+      responses:
+        '101':
+          description: WebSocket protocol upgrade
+        '400':
+          description: Bad request
+
+  /api/support-users/paginated:
+    get:
+      summary: List support users (paginated)
+      description: Returns a paginated list of all users with the 'support' role. Requires authentication.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number (default 1)
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+          description: Page size (default 100)
+      responses:
+        '200':
+          description: List of support users (paginated)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+        '401':
+          description: Unauthorized
+
+  /api/support-users/all:
+    get:
+      summary: List all support users (unpaginated)
+      description: Returns all users with the 'support' role (unpaginated). Requires authentication.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all support users (unpaginated)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
 components:
   securitySchemes:
     bearerAuth:
@@ -970,35 +728,26 @@ components:
       properties:
         order_number:
           type: string
-          description: Unique alphanumeric order number (2 letters + 2 digits, e.g., Z1R4)
         user_id:
           type: string
         order_type_id:
           type: string
         order_level_id:
           type: string
-          description: Foreign key to OrderLevel (required)
         level_name:
           type: string
-          description: Name of the order level (response only)
         order_pages_id:
           type: string
-          description: Foreign key to OrderPages (required)
         order_pages_name:
           type: string
-          description: Name of the order pages (response only)
         order_urgency_id:
           type: string
-          description: Foreign key to OrderUrgency (required)
         order_urgency_name:
           type: string
-          description: Name of the order urgency (response only)
         order_style_id:
           type: string
-          description: Foreign key to OrderStyle (required)
         order_style_name:
           type: string
-          description: Name of the order style (response only)
         title:
           type: string
         description:
@@ -1009,10 +758,8 @@ components:
           type: string
         writer_id:
           type: string
-          description: Writer's ObjectID (nullable, only present if assigned)
         writer_name:
           type: string
-          description: Writer's full name (response only, present if assigned)
         submission_date:
           type: string
           format: date-time
@@ -1020,31 +767,23 @@ components:
           type: string
         is_high_priority:
           type: boolean
-          description: Whether the order is high priority (required)
         order_language_id:
           type: string
-          description: Foreign key to OrderLanguage (required)
         order_language_name:
           type: string
-          description: Name of the order language (response only)
         no_of_sources:
           type: string
-          description: Number of sources for the order (as string, required)
         preferred_writer_number:
           type: string
           nullable: true
-          description: Preferred writer number (optional)
         original_order_file:
           type: string
           nullable: true
-          description: S3 key or URL of the original order file (optional)
         apply_feedback_requests:
           type: integer
-          description: Number of feedback requests applied
         updated_at:
           type: string
           format: date-time
-          description: Last update timestamp
     OrderType:
       type: object
       properties:
@@ -1128,14 +867,11 @@ components:
       properties:
         order_id:
           type: string
-          description: The order to pay for
         method:
           type: string
           enum: [paypal, paypal_capture, mastercard]
-          description: Payment method
         payment_info:
           type: object
-          description: Payment gateway-specific info (card details, PayPal token, etc)
       required:
         - order_id
         - method
@@ -1168,10 +904,64 @@ components:
         feedback_file:
           type: string
           nullable: true
-          description: URL for the feedback file (may be empty or omitted)
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        order_id:
+          type: string
+        sender_id:
+          type: string
+        receiver_id:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        read:
+          type: boolean
+    SupportChat:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        support_id:
+          type: string
+        writer_id:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    SupportChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        chat_id:
+          type: string
+        sender_id:
+          type: string
+        receiver_id:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        read:
+          type: boolean

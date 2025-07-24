@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: codebase-api-ingress
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.academiccodebase.com
+    secretName: api-academiccodebase-com-tls
+  rules:
+  - host: api.academiccodebase.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: codebase-api-service
+            port:
+              number: 8080
